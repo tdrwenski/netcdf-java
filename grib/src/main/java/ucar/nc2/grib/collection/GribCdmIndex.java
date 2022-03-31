@@ -17,6 +17,7 @@ import thredds.filesystem.MFileOS;
 import thredds.inventory.*;
 import thredds.inventory.filter.StreamFilter;
 import thredds.inventory.partition.*;
+import ucar.nc2.NetcdfFiles;
 import ucar.nc2.dataset.DatasetUrl;
 import ucar.nc2.grib.GribIndexCache;
 import ucar.nc2.grib.grib1.Grib1RecordScanner;
@@ -184,7 +185,7 @@ public class GribCdmIndex implements IndexReader {
     String name = makeNameFromIndexFilename(indexFilename);
     GribCollectionImmutable result = null;
 
-    try (RandomAccessFile raf = RandomAccessFile.acquire(indexFilenameInCache)) {
+    try (RandomAccessFile raf = NetcdfFiles.getRaf(indexFilenameInCache, -1)) {
       GribCollectionType type = getType(raf);
 
       switch (type) {
@@ -434,8 +435,8 @@ public class GribCdmIndex implements IndexReader {
     if (collectionIndexFile != null) { // it exists
 
       boolean bad;
-      try (RandomAccessFile raf = RandomAccessFile.acquire(collectionIndexFile.getPath())) { // read it to verify its
-                                                                                             // good
+      try (RandomAccessFile raf = NetcdfFiles.getRaf(collectionIndexFile.getPath(), -1)) { // read it to verify its
+                                                                                           // good
         GribCollectionType type = getType(raf);
         bad = (type != wantType);
         if (!bad && updateType == CollectionUpdateType.nocheck)
