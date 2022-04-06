@@ -314,10 +314,9 @@ public class GribCdmIndex implements IndexReader {
     if (config.ptype == FeatureCollectionConfig.PartitionType.none
         || config.ptype == FeatureCollectionConfig.PartitionType.all) {
 
-      try (CollectionAbstract dcm = new CollectionPathMatcher(config, specp, logger)) {
-        changed =
-            updateGribCollection(isGrib1, dcm, updateType, FeatureCollectionConfig.PartitionType.none, logger, errlog);
-      }
+      final MFileCollectionManager collectionManager = new MFileCollectionManager(config, errlog, logger);
+      changed = updateGribCollection(isGrib1, collectionManager, updateType, FeatureCollectionConfig.PartitionType.none,
+          logger, errlog);
 
     } else if (config.ptype == FeatureCollectionConfig.PartitionType.timePeriod) {
 
