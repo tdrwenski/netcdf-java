@@ -143,6 +143,13 @@ public class FeatureCollectionConfig {
     return true; // default true
   }
 
+  public CollectionSpecParserAbstract getCollectionSpecParserAbstract(Formatter errlog) {
+    if (rootDir != null)
+      return CollectionSpecParsers.create(rootDir, regExp, errlog);
+    else
+      return CollectionSpecParsers.create(spec, errlog);
+  }
+
   public CollectionSpecParser getCollectionSpecParser(Formatter errlog) {
     if (rootDir != null)
       return new CollectionSpecParser(rootDir, regExp, errlog);
@@ -252,7 +259,7 @@ public class FeatureCollectionConfig {
     if (dateFormatMark != null)
       return new DateExtractorFromName(dateFormatMark, false);
     else {
-      CollectionSpecParser sp = getCollectionSpecParser(null);
+      CollectionSpecParserAbstract sp = CollectionSpecParsers.create(spec, null);
       if (sp.getDateFormatMark() != null)
         return new DateExtractorFromName(sp.getDateFormatMark(), true);
     }
