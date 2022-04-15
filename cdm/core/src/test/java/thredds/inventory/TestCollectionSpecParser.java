@@ -74,7 +74,7 @@ public class TestCollectionSpecParser {
         {".*\\.grib1", System.getProperty("user.dir"), false, ".*\\.grib1", null},
 
         {"dir/**/subdir/.*grib1", "dir", true, "subdir/.*grib1", null},});
-}
+  }
 
   private final String spec;
   private final String expectedRootDir;

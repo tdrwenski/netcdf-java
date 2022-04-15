@@ -23,27 +23,27 @@ public class TestCollectionSpecParserS3 {
   @Parameterized.Parameters(name = "{0}")
   public static List<Object[]> getTestParameters() {
     return Arrays.asList(new Object[][] {
-         {"u00/FNMOC/NAVGEM/pressure/**/US058GMET-GR1mdl.0018_0056_00000F0..#yyyyMMddHH#_0102_000000-000000pres$",
-         "u00/FNMOC/NAVGEM/pressure/", true,
-         "US058GMET-GR1mdl.0018_0056_00000F0............_0102_000000-000000pres$",
-         "US058GMET-GR1mdl.0018_0056_00000F0..#yyyyMMddHH"},
+        {"u00/FNMOC/NAVGEM/pressure/**/US058GMET-GR1mdl.0018_0056_00000F0..#yyyyMMddHH#_0102_000000-000000pres$",
+            "u00/FNMOC/NAVGEM/pressure/", true,
+            "US058GMET-GR1mdl.0018_0056_00000F0............_0102_000000-000000pres$",
+            "US058GMET-GR1mdl.0018_0056_00000F0..#yyyyMMddHH"},
 
-         {"data/ldm/pub/native/grid/NCEP/GFS/Alaska_191km/**/GFS_Alaska_191km_#yyyyMMdd_HHmm#\\.grib1$",
-         "data/ldm/pub/native/grid/NCEP/GFS/Alaska_191km/", true, "GFS_Alaska_191km_.............\\.grib1$",
-         "GFS_Alaska_191km_#yyyyMMdd_HHmm"},
+        {"data/ldm/pub/native/grid/NCEP/GFS/Alaska_191km/**/GFS_Alaska_191km_#yyyyMMdd_HHmm#\\.grib1$",
+            "data/ldm/pub/native/grid/NCEP/GFS/Alaska_191km/", true, "GFS_Alaska_191km_.............\\.grib1$",
+            "GFS_Alaska_191km_#yyyyMMdd_HHmm"},
 
         {"grid/grib/grib1/data/agg/.*\\.grb", "grid/grib/grib1/data/agg/", false, ".*\\.grb", null},
 
-         {"data/ldm/pub/decoded/netcdf/surface/metar/**/Surface_METAR_#yyyyMMdd_HHmm#\\.nc",
-         "data/ldm/pub/decoded/netcdf/surface/metar/", true, "Surface_METAR_.............\\.nc",
-         "Surface_METAR_#yyyyMMdd_HHmm"},
+        {"data/ldm/pub/decoded/netcdf/surface/metar/**/Surface_METAR_#yyyyMMdd_HHmm#\\.nc",
+            "data/ldm/pub/decoded/netcdf/surface/metar/", true, "Surface_METAR_.............\\.nc",
+            "Surface_METAR_#yyyyMMdd_HHmm"},
 
-         {"data/ldm/pub/decoded/netcdf/surface/metar/**/Surface_METAR_#yyyyMMdd_HHmm#.nc",
-         "data/ldm/pub/decoded/netcdf/surface/metar/", true, "Surface_METAR_..............nc",
-         "Surface_METAR_#yyyyMMdd_HHmm"},
+        {"data/ldm/pub/decoded/netcdf/surface/metar/**/Surface_METAR_#yyyyMMdd_HHmm#.nc",
+            "data/ldm/pub/decoded/netcdf/surface/metar/", true, "Surface_METAR_..............nc",
+            "Surface_METAR_#yyyyMMdd_HHmm"},
 
-         {"data/ldm/pub/decoded/netcdf/surface/metar/**/Surface_METAR_#yyyyMMdd_HHmm",
-         "data/ldm/pub/decoded/netcdf/surface/metar/", true, "Surface_METAR_*", "Surface_METAR_#yyyyMMdd_HHmm"},
+        {"data/ldm/pub/decoded/netcdf/surface/metar/**/Surface_METAR_#yyyyMMdd_HHmm",
+            "data/ldm/pub/decoded/netcdf/surface/metar/", true, "Surface_METAR_*", "Surface_METAR_#yyyyMMdd_HHmm"},
 
         {"data/ldm/pub/decoded/netcdf/surface/metar/Surface_METAR_#yyyyMMdd_HHmm",
             "data/ldm/pub/decoded/netcdf/surface/metar/", false, "Surface_METAR_*", "Surface_METAR_#yyyyMMdd_HHmm"},
@@ -57,11 +57,11 @@ public class TestCollectionSpecParserS3 {
 
         {"data/ldm/pub/decoded/netcdf/surface/metar/", "data/ldm/pub/decoded/netcdf/surface/metar/", false, null, null},
 
-         {"data/ldm/pub/decoded/netcdf/surface/metar/**/", "data/ldm/pub/decoded/netcdf/surface/metar/", true, null,
-         null},
+        {"data/ldm/pub/decoded/netcdf/surface/metar/**/", "data/ldm/pub/decoded/netcdf/surface/metar/", true, null,
+            null},
 
-         {"data/ldm/pub/decoded/netcdf/surface/metar/**/.*", "data/ldm/pub/decoded/netcdf/surface/metar/", true, ".*",
-         null},
+        {"data/ldm/pub/decoded/netcdf/surface/metar/**/.*", "data/ldm/pub/decoded/netcdf/surface/metar/", true, ".*",
+            null},
 
         {"data/ldm/pub/decoded/netcdf/surface/metar/.*", "data/ldm/pub/decoded/netcdf/surface/metar/", false, ".*",
             null},

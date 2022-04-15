@@ -129,7 +129,8 @@ public abstract class CollectionSpecParserAbstract {
     } else if (endPositionOfLastDelimiter >= collectionSpec.length() - 1) {
       return new String[] {collectionSpec.substring(0, startPositionOfLastDelimiter), null};
     } else {
-      return new String[] {collectionSpec.substring(0, startPositionOfLastDelimiter), collectionSpec.substring(endPositionOfLastDelimiter + 1)};
+      return new String[] {collectionSpec.substring(0, startPositionOfLastDelimiter),
+          collectionSpec.substring(endPositionOfLastDelimiter + 1)};
     }
   }
 

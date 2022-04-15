@@ -76,6 +76,7 @@ public class MFileCollectionManager extends CollectionManagerAbstract {
   private final List<CollectionConfig> scanList = new ArrayList<>(); // an MCollection is a collection of managed files
   private final long olderThanInMsecs; // LOOK why not use LastModifiedLimit filter ?
   // protected String rootDir;
+  protected String delimiter;
   protected FeatureCollectionConfig config;
 
   @GuardedBy("this")
@@ -95,6 +96,7 @@ public class MFileCollectionManager extends CollectionManagerAbstract {
     this.recheck = null;
     this.protoChoice = FeatureCollectionConfig.ProtoChoice.Penultimate; // default
     this.root = sp.getRootDir();
+    this.delimiter = sp.getDelimiter();
 
     CompositeMFileFilter filters = new CompositeMFileFilter();
     if (null != sp.getFilter())
@@ -103,7 +105,8 @@ public class MFileCollectionManager extends CollectionManagerAbstract {
 
     dateExtractor = (sp.getDateFormatMark() == null) ? new DateExtractorNone()
         : new DateExtractorFromName(sp.getDateFormatMark(), true);
-    scanList.add(new CollectionConfig(sp.getRootDir(), sp.getRootDir(), sp.wantSubdirs(), filters, null));
+
+    scanList.add(new CollectionConfig(sp.getRootDir(), getScanRootDir(sp), sp.wantSubdirs(), filters, null));
   }
 
   // this is the full featured constructor, using FeatureCollectionConfig for config.
@@ -113,6 +116,7 @@ public class MFileCollectionManager extends CollectionManagerAbstract {
 
     CollectionSpecParserAbstract sp = config.getCollectionSpecParserAbstract(errlog);
     this.root = sp.getRootDir();
+    this.delimiter = sp.getDelimiter();
 
     CompositeMFileFilter filters = new CompositeMFileFilter();
     if (null != sp.getFilter())
@@ -126,7 +130,7 @@ public class MFileCollectionManager extends CollectionManagerAbstract {
     else
       dateExtractor = new DateExtractorNone();
 
-    scanList.add(new CollectionConfig(sp.getRootDir(), sp.getRootDir(), sp.wantSubdirs(), filters, null));
+    scanList.add(new CollectionConfig(sp.getRootDir(), getScanRootDir(sp), sp.wantSubdirs(), filters, null));
 
     if (config.protoConfig != null)
       protoChoice = config.protoConfig.choice;
@@ -190,11 +194,15 @@ public class MFileCollectionManager extends CollectionManagerAbstract {
 
     dateExtractor = (sp.getDateFormatMark() == null) ? new DateExtractorNone()
         : new DateExtractorFromName(sp.getDateFormatMark(), true);
-    scanList.add(new CollectionConfig(sp.getRootDir(), sp.getRootDir(), sp.wantSubdirs(), filters, null));
+    scanList.add(new CollectionConfig(sp.getRootDir(), getScanRootDir(sp), sp.wantSubdirs(), filters, null));
 
     this.recheck = null;
     this.protoChoice = FeatureCollectionConfig.ProtoChoice.Penultimate; // default
     this.olderThanInMsecs = -1;
+  }
+
+  private String getScanRootDir(CollectionSpecParserAbstract specParser) {
+    return specParser.getRootDir() + specParser.getFragment();
   }
 
   public MFileCollectionManager(String name, CollectionConfig mc, CalendarDate startPartition,
@@ -330,6 +338,11 @@ public class MFileCollectionManager extends CollectionManagerAbstract {
     }
 
     return true;
+  }
+
+  @Override
+  public String getIndexFilename(String suffix) {
+    return root + delimiter + collectionName + suffix; // TODO isn't this wrong for a top level bucket?
   }
 
   ////////////////////////
