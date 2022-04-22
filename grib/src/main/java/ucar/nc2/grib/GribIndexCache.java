@@ -5,6 +5,9 @@
 
 package ucar.nc2.grib;
 
+import thredds.filesystem.MFileOS;
+import thredds.inventory.MFile;
+import thredds.inventory.MFiles;
 import ucar.nc2.grib.collection.Grib;
 import ucar.nc2.util.DiskCache2;
 import java.io.File;
@@ -57,5 +60,22 @@ public class GribIndexCache {
       result = getDiskCache2().getExistingFileOrCache(maybeIndexAlreadyExists);
     }
     return result;
+  }
+
+  /**
+   * Look for an existing MFile: first in the fileLocation, then in the cache
+   *
+   * @param fileLocation full path of original index filename
+   * @return existing MFile if you can find it, else null
+   */
+  // TODO move to GribCdmIndex and make private
+  public static MFile getExistingMFileOrCacheFile(String fileLocation) {
+    MFile mFile = MFiles.create(fileLocation);
+    if (mFile != null && mFile.exists()) {
+      return mFile;
+    }
+
+    final File file = getDiskCache2().getExistingCacheFile(fileLocation);
+    return file == null ? null : new MFileOS(file);
   }
 }

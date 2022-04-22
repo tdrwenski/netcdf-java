@@ -286,12 +286,24 @@ public class DiskCache2 {
     if (f.exists())
       return f;
 
-    if (neverUseCache)
+    return getExistingCacheFile(fileLocation);
+  }
+
+  /**
+   * Look for an existing File in the cache
+   *
+   * @param fileLocation the original name
+   * @return existing File if you can find it, else null
+   */
+  public File getExistingCacheFile(String fileLocation) {
+    if (neverUseCache) {
       return null;
+    }
 
     File fc = new File(makeCachePath(fileLocation));
-    if (fc.exists())
+    if (fc.exists()) {
       return fc;
+    }
 
     return null;
   }
