@@ -5,7 +5,9 @@
 
 package thredds.inventory;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
@@ -72,10 +74,17 @@ public interface MFile extends Comparable<MFile> {
   boolean exists();
 
   /**
-   * Write the MFile to an OutputStream
+   * Get the MFile InputStream
    *
-   * @param outputStream the OutputStream the MFile contents should be written to
+   * @return the MFile InputStream
    */
+  InputStream getInputStream() throws FileNotFoundException;
+
+    /**
+     * Write the MFile to an OutputStream
+     *
+     * @param outputStream the OutputStream the MFile contents should be written to
+     */
   void writeToStream(OutputStream outputStream) throws IOException;
 
   /**
