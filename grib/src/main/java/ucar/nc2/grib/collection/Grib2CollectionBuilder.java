@@ -216,7 +216,7 @@ class Grib2CollectionBuilder extends GribCollectionBuilder {
     for (Object g : groups)
       groups2.add((Grib2CollectionWriter.Group) g); // copy to change GribCollectionBuilder.Group ->
                                                     // Grib2CollectionWriter.Group
-    File indexFileInCache = GribIndexCache.getFileOrCache(indexFilepath);
+    final MFile indexFileInCache = GribCdmIndex.getIndexFile(indexFilepath);
     return writer.writeIndex(name, indexFileInCache, masterRuntime, groups2, files, type, dateRange);
   }
 

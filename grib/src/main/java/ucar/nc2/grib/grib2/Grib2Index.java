@@ -6,8 +6,10 @@
 package ucar.nc2.grib.grib2;
 
 import com.google.protobuf.ByteString;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import thredds.inventory.CollectionUpdateType;
+import thredds.inventory.MFile;
 import ucar.nc2.NetcdfFiles;
 import ucar.nc2.grib.GribIndex;
 import ucar.nc2.grib.GribIndexCache;
@@ -89,18 +91,15 @@ public class Grib2Index extends GribIndex {
   }
 
   public boolean readIndex(String filename, long gribLastModified, CollectionUpdateType force) {
-    String idxPath = filename;
-    if (!idxPath.endsWith(GBX9_IDX))
-      idxPath += GBX9_IDX;
-    File idxFile = GribIndexCache.getExistingFileOrCache(idxPath);
-    if (idxFile == null)
+    final MFile idxFile = getIndexFile(filename);
+    if (!idxFile.exists())
       return false;
 
-    long idxModified = idxFile.lastModified();
+    long idxModified = idxFile.getLastModified();
     if ((force != CollectionUpdateType.nocheck) && (idxModified < gribLastModified))
       return false; // force new index if file was updated
 
-    try (FileInputStream fin = new FileInputStream(idxFile)) {
+    try (InputStream fin = idxFile.getInputStream()) {
       //// check header is ok
       if (!NcStream.readAndTest(fin, MAGIC_START.getBytes(StandardCharsets.UTF_8))) {
         logger.info("Bad magic number of grib index on file= {}", idxFile);
@@ -200,11 +199,8 @@ public class Grib2Index extends GribIndex {
 
   // LOOK what about extending an index ??
   public boolean makeIndex(String filename, RandomAccessFile dataRaf) throws IOException {
-    String idxPath = filename;
-    if (!idxPath.endsWith(GBX9_IDX))
-      idxPath += GBX9_IDX;
-    File idxFile = GribIndexCache.getFileOrCache(idxPath);
-    File idxFileTmp = GribIndexCache.getFileOrCache(idxPath + ".tmp");
+    final MFile idxFile = getIndexFile(filename);
+    final File idxFileTmp = File.createTempFile("indexFile", ".tmp");
 
     boolean ok = false;
     RandomAccessFile raf = null;
@@ -264,11 +260,14 @@ public class Grib2Index extends GribIndex {
       if (ok) {
         RandomAccessFile.eject(idxFile.getPath());
         boolean deleteOk = !idxFile.exists() || idxFile.delete();
-        boolean renameOk = idxFileTmp.renameTo(idxFile);
+        boolean createOk = idxFile.createFrom(idxFileTmp.toPath());
         if (!deleteOk)
           logger.error("  could not delete Grib2Index= {}", idxFile.getPath());
-        if (!renameOk)
-          logger.error("  could not rename Grib2Index= {}", idxFile.getPath());
+        if (!createOk)
+          logger.error("  could not create Grib2Index= {}", idxFile.getPath());
+        if (!idxFileTmp.delete()) {
+          logger.error("  could not delete Grib1Index= {}", idxFileTmp.getPath());
+        }
       }
     }
   }

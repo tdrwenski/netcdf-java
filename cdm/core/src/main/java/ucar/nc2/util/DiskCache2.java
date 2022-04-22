@@ -177,6 +177,14 @@ public class DiskCache2 {
     return root;
   }
 
+  public boolean getNeverUseCache() {
+    return neverUseCache;
+  }
+
+  public boolean getAlwaysUseCache() {
+    return alwaysUseCache;
+  }
+
   /**
    * Get a File in the cache, corresponding to the fileLocation.
    * File may or may not exist.

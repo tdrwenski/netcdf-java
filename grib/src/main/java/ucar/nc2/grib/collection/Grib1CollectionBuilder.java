@@ -191,7 +191,7 @@ public class Grib1CollectionBuilder extends GribCollectionBuilder {
     List<Grib1CollectionWriter.Group> groups2 = new ArrayList<>();
     for (Object g : groups)
       groups2.add((Grib1CollectionWriter.Group) g); // why copy ?
-    File indexFileInCache = GribIndexCache.getFileOrCache(indexFilepath);
+    final MFile indexFileInCache = GribCdmIndex.getIndexFile(indexFilepath);
     return writer.writeIndex(name, indexFileInCache, masterRuntime, groups2, files, type, dateRange);
   }
 

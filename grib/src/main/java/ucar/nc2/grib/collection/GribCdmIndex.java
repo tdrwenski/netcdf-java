@@ -7,6 +7,7 @@ package ucar.nc2.grib.collection;
 
 import com.beust.jcommander.*;
 import java.nio.charset.StandardCharsets;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -167,8 +168,8 @@ public class GribCdmIndex implements IndexReader {
   @Nullable
   public static GribCollectionImmutable openCdmIndex(String indexFilename, FeatureCollectionConfig config,
       boolean useCache, Logger logger) throws IOException {
-    File indexFileInCache = useCache ? GribIndexCache.getExistingFileOrCache(indexFilename) : new File(indexFilename);
-    if (indexFileInCache == null)
+    final MFile indexFileInCache = useCache ? getIndexFile(indexFilename) : MFiles.create(indexFilename);
+    if (!indexFileInCache.exists())
       return null;
     String indexFilenameInCache = indexFileInCache.getPath();
     String name = config.getStandardizedCollectionName();
@@ -418,9 +419,8 @@ public class GribCdmIndex implements IndexReader {
     if (updateType == CollectionUpdateType.never)
       return false;
 
-    // see if index already exists
-    File collectionIndexFile = GribIndexCache.getExistingFileOrCache(idxFilenameOrg);
-    if (collectionIndexFile != null) { // it exists
+    final MFile collectionIndexFile = getIndexFile(idxFilenameOrg);
+    if (collectionIndexFile.exists()) {
 
       boolean bad;
       try (RandomAccessFile raf = NetcdfFiles.getRaf(collectionIndexFile.getPath(), -1)) { // read it to verify its
@@ -902,10 +902,9 @@ public class GribCdmIndex implements IndexReader {
     }
   }
 
-  @Override
-  public boolean readMFiles(Path indexFile, List<MFile> result) throws IOException {
-    logger.debug("GribCdmIndex.readMFiles {}", indexFile);
-    try (RandomAccessFile raf = RandomAccessFile.acquire(indexFile.toString())) {
+  public boolean readMFiles(String indexFilePath, List<MFile> result) throws IOException {
+    logger.debug("GribCdmIndex.readMFiles {}", indexFilePath);
+    try (RandomAccessFile raf = NetcdfFiles.getRaf(indexFilePath, -1)) {
       // GribCollectionType type = getType(raf);
       // if (type == GribCollectionType.GRIB1 || type == GribCollectionType.GRIB2) {
       if (openIndex(raf, logger)) {
@@ -921,6 +920,11 @@ public class GribCdmIndex implements IndexReader {
       // }
     }
     // return false;
+  }
+
+  @Override
+  public boolean readMFiles(Path indexFile, List<MFile> result) throws IOException {
+    return readMFiles(indexFile.toString(), result);
   }
 
   private boolean openIndex(RandomAccessFile indexRaf, Logger logger) {
@@ -958,6 +962,32 @@ public class GribCdmIndex implements IndexReader {
       logger.error("Error reading index " + indexRaf.getLocation(), t);
       return false;
     }
+  }
+
+  /**
+   * Look for a MFile in the fileLocation and in the cache
+   *
+   * @param fileLocation full path of original index filename
+   * @return a MFile that may or may not exist
+   */
+  // TODO duplicated from GribIndex-- don't want it to be public because of MFile
+  @Nonnull
+  protected static MFile getIndexFile(String fileLocation) {
+    final MFile mFile = MFiles.create(fileLocation);
+    final boolean existsOutsideCache = mFile.exists();
+
+    if (GribIndexCache.getDiskCache2().getNeverUseCache()) {
+      return mFile;
+    }
+
+    final File cacheFile = GribIndexCache.getCacheFile(fileLocation);
+    final boolean existsInCache = cacheFile != null && cacheFile.exists();
+
+    if (GribIndexCache.getDiskCache2().getAlwaysUseCache() || (existsInCache && !existsOutsideCache)) {
+      return cacheFile == null ? mFile : new MFileOS(cacheFile);
+    }
+
+    return mFile;
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -5,6 +5,7 @@
 
 package ucar.nc2.grib;
 
+import javax.annotation.Nullable;
 import ucar.nc2.grib.collection.Grib;
 import ucar.nc2.util.DiskCache2;
 import java.io.File;
@@ -27,6 +28,17 @@ public class GribIndexCache {
     if (diskCache == null)
       diskCache = DiskCache2.getDefault();
     return diskCache;
+  }
+
+  /**
+   * Return index file from the cache, may or may not exist
+   *
+   * @param fileLocation full path of original index filename
+   * @return File in cache, or null if cache can't be used
+   */
+  @Nullable
+  public static File getCacheFile(String fileLocation) {
+    return getDiskCache2().getCacheFile(fileLocation);
   }
 
   /**

@@ -90,7 +90,7 @@ class Grib2CollectionWriter extends GribCollectionWriter {
    * GribCollectionIndex (sizeIndex bytes)
    */
 
-  boolean writeIndex(String name, File idxFile, CoordinateRuntime masterRuntime, List<Group> groups, List<MFile> files,
+  boolean writeIndex(String name, MFile idxFile, CoordinateRuntime masterRuntime, List<Group> groups, List<MFile> files,
       GribCollectionImmutable.Type type, CalendarDateRange dateRange) throws IOException {
     Grib2Record first = null; // take global metadata from here
     boolean deleteOnClose = false;
@@ -103,7 +103,9 @@ class Grib2CollectionWriter extends GribCollectionWriter {
     }
     logger.debug(" createIndex for {}", idxFile.getPath());
 
-    try (RandomAccessFile raf = new RandomAccessFile(idxFile.getPath(), "rw")) {
+    final File tempIndexFile = File.createTempFile("indexFile", ".tmp");
+
+    try (RandomAccessFile raf = new RandomAccessFile(tempIndexFile.getPath(), "rw")) {
       //// header message
       raf.order(RandomAccessFile.BIG_ENDIAN);
       raf.write(MAGIC_START.getBytes(StandardCharsets.UTF_8));
@@ -223,13 +225,14 @@ class Grib2CollectionWriter extends GribCollectionWriter {
       raf.write(b); // message - all in one gulp
       logger.debug("  write GribCollectionIndex= {} bytes", b.length);
 
+      raf.flush();
+      return idxFile.createFrom(tempIndexFile.toPath());
+
     } finally {
       // remove it on failure
-      if (deleteOnClose && !idxFile.delete())
-        logger.error(" gc2 cant deleteOnClose index file {}", idxFile.getPath());
+      if (deleteOnClose && !tempIndexFile.delete())
+        logger.error(" gc2 cant deleteOnClose index file {}", tempIndexFile.getPath());
     }
-
-    return true;
   }
 
   /*

@@ -79,6 +79,7 @@ public class GcMFile implements thredds.inventory.MFile {
   @Override
   public String getPath() {
     String path = new File(directory, name).getPath();
+    path = name.endsWith("/") ? path + "/" : path; // TODO Hacky fix for s3 path that has a "#delimiter=/" in the name
     return StringUtil2.replace(path, '\\', "/");
   }
 

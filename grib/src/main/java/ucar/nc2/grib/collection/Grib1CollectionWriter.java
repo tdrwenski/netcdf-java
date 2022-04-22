@@ -89,8 +89,8 @@ class Grib1CollectionWriter extends GribCollectionWriter {
    * GribCollectionIndex (sizeIndex bytes)
    */
 
-  // indexFile is in the cache
-  boolean writeIndex(String name, File idxFile, CoordinateRuntime masterRuntime, List<Group> groups, List<MFile> files,
+  // indexFile is possibly in the cache
+  boolean writeIndex(String name, MFile idxFile, CoordinateRuntime masterRuntime, List<Group> groups, List<MFile> files,
       GribCollectionImmutable.Type type, CalendarDateRange dateRange) throws IOException {
     Grib1Record first = null; // take global metadata from here
     boolean deleteOnClose = false;
@@ -103,7 +103,9 @@ class Grib1CollectionWriter extends GribCollectionWriter {
     }
     logger.debug(" createIndex for {}", idxFile.getPath());
 
-    try (RandomAccessFile raf = new RandomAccessFile(idxFile.getPath(), "rw")) {
+    final File tempIndexFile = File.createTempFile("indexFile", ".tmp");
+
+    try (RandomAccessFile raf = new RandomAccessFile(tempIndexFile.getPath(), "rw")) {
       raf.order(RandomAccessFile.BIG_ENDIAN);
 
       //// header message
@@ -225,13 +227,15 @@ class Grib1CollectionWriter extends GribCollectionWriter {
 
       logger.debug("  write GribCollectionIndex= {} bytes", b.length);
       logger.debug("  file size =  {} bytes", raf.length());
-      return true;
+
+      raf.flush();
+      return idxFile.createFrom(tempIndexFile.toPath());
 
     } finally {
 
       // remove it on failure
-      if (deleteOnClose && !idxFile.delete()) {
-        logger.error(" gc1 cant deleteOnClose index file {}", idxFile.getPath());
+      if (deleteOnClose && !tempIndexFile.delete()) {
+        logger.error(" gc1 cant deleteOnClose index file {}", tempIndexFile.getPath());
       }
     }
   }

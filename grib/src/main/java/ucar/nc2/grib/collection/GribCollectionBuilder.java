@@ -18,7 +18,6 @@ import ucar.nc2.grib.coord.CoordinateRuntime;
 import ucar.nc2.grib.coord.CoordinateTime2D;
 import ucar.nc2.grib.coord.CoordinateTimeAbstract;
 import ucar.nc2.grib.GribIndex;
-import ucar.nc2.grib.GribIndexCache;
 import ucar.nc2.time.CalendarDate;
 import ucar.nc2.time.CalendarDateRange;
 import ucar.nc2.util.CloseableIterator;
@@ -64,8 +63,8 @@ abstract class GribCollectionBuilder {
     if (ff == CollectionUpdateType.always)
       return true;
 
-    File collectionIndexFile = GribIndexCache.getExistingFileOrCache(dcm.getIndexFilename(GribCdmIndex.NCX_SUFFIX));
-    if (collectionIndexFile == null)
+    final MFile collectionIndexFile = GribCdmIndex.getIndexFile(dcm.getIndexFilename(GribCdmIndex.NCX_SUFFIX));
+    if (!collectionIndexFile.exists())
       return true;
 
     if (ff == CollectionUpdateType.nocheck)
@@ -74,8 +73,8 @@ abstract class GribCollectionBuilder {
     return needsUpdate(ff, collectionIndexFile);
   }
 
-  private boolean needsUpdate(CollectionUpdateType ff, File collectionIndexFile) throws IOException {
-    long collectionLastModified = collectionIndexFile.lastModified();
+  private boolean needsUpdate(CollectionUpdateType ff, MFile collectionIndexFile) throws IOException {
+    long collectionLastModified = collectionIndexFile.getLastModified();
     Set<String> newFileSet = new HashSet<>();
 
     CollectionManager.ChangeChecker cc = GribIndex.getChangeChecker();
@@ -93,10 +92,11 @@ abstract class GribCollectionBuilder {
     // now see if any files were deleted, by reading the index and comparing to the files there
     GribCdmIndex reader = new GribCdmIndex(logger);
     List<MFile> oldFiles = new ArrayList<>();
-    reader.readMFiles(collectionIndexFile.toPath(), oldFiles);
+    reader.readMFiles(collectionIndexFile.getPath(), oldFiles);
     Set<String> oldFileSet = new HashSet<>();
     for (MFile oldFile : oldFiles) {
-      if (!newFileSet.contains(oldFile.getPath()))
+      if (!newFileSet.contains(oldFile.getPath())) // the set must contain exact file path, so moved files will trigger
+                                                   // an index recreate
         return true; // got deleted - must recreate the index
       oldFileSet.add(oldFile.getPath());
     }

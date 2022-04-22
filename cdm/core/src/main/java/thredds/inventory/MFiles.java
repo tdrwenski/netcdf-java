@@ -7,7 +7,7 @@ package thredds.inventory;
 
 import java.io.IOException;
 import java.util.ServiceLoader;
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import thredds.filesystem.MFileOS;
@@ -21,14 +21,14 @@ import ucar.nc2.internal.ncml.NcmlReader;
 public class MFiles {
   private static final Logger logger = LoggerFactory.getLogger(NcmlReader.class);
 
+  // TODO is it okay to change the behavior here?
   /**
-   * Create an {@link thredds.inventory.MFile} from a given location if it exists and is readable, otherwise return
-   * null.
+   * Create an {@link thredds.inventory.MFile} from a given location, the file may or may not exist
    *
    * @param location location of file (local or remote) to be used to back the MFile object
    * @return {@link thredds.inventory.MFile}
    */
-  @Nullable
+  @Nonnull
   public static MFile create(String location) {
     MFileProvider mFileProvider = null;
 
@@ -42,10 +42,10 @@ public class MFiles {
 
     MFile mfile = null;
     try {
-      mfile = mFileProvider != null ? mFileProvider.create(location) : MFileOS.getExistingFile(location);
+      mfile = mFileProvider != null ? mFileProvider.create(location) : null;
     } catch (IOException ioe) {
       logger.error("Error creating MFile at {}.", location, ioe);
     }
-    return mfile;
+    return mfile != null ? mfile : new MFileOS(location);
   }
 }
