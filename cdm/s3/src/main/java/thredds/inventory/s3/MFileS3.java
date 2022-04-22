@@ -276,6 +276,16 @@ public class MFileS3 implements MFile {
   }
 
   @Override
+  public boolean exists() {
+    try {
+      getLastModified();
+      return true;
+    } catch (NoSuchKeyException e) {
+      return false;
+    }
+  }
+
+  @Override
   public void writeToStream(OutputStream outputStream) throws IOException {
     S3Client client = getClient();
 
