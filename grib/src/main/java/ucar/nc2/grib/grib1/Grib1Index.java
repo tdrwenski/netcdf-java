@@ -87,9 +87,7 @@ public class Grib1Index extends GribIndex {
   }
 
   public boolean readIndex(String filename, long gribLastModified, CollectionUpdateType force) {
-    String idxPath = filename;
-    if (!idxPath.endsWith(GBX9_IDX))
-      idxPath += GBX9_IDX;
+    final String idxPath = getIndexPath(filename);
     final MFile idxFile = GribIndexCache.getExistingMFileOrCacheFile(idxPath);
     if (idxFile == null)
       return false;
@@ -145,6 +143,23 @@ public class Grib1Index extends GribIndex {
     }
 
     return true;
+  }
+
+  private static String getIndexPath(String filename) {
+    String idxPath = filename;
+    String fragment = "";
+
+    if ((filename.startsWith("cdms3:") || filename.startsWith("s3:")) && filename.contains("#")) { // TODO nicer way using MFile?
+      final int fragmentLocation = filename.indexOf('#');
+      idxPath = filename.substring(0, fragmentLocation);
+      fragment = filename.substring(fragmentLocation);
+    }
+
+    if (!idxPath.endsWith(GBX9_IDX)) {
+      idxPath += GBX9_IDX;
+    }
+
+    return idxPath + fragment;
   }
 
   // deserialize the Grib1Record object
