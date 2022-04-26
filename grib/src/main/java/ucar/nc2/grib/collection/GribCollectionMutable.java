@@ -221,7 +221,7 @@ public class GribCollectionMutable implements Closeable {
     if (!directory.exists()) {
       File indexFile = new File(indexFilename);
       File parent = indexFile.getParentFile();
-      if (parent.exists())
+      if (parent != null && parent.exists())
         directory = parent;
     }
     return directory;
