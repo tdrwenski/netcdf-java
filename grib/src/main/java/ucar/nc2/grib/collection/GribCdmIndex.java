@@ -17,6 +17,7 @@ import thredds.filesystem.MFileOS;
 import thredds.inventory.*;
 import thredds.inventory.filter.StreamFilter;
 import thredds.inventory.partition.*;
+import ucar.nc2.NetcdfFiles;
 import ucar.nc2.dataset.DatasetUrl;
 import ucar.nc2.grib.GribIndexCache;
 import ucar.nc2.grib.grib1.Grib1RecordScanner;
@@ -100,37 +101,26 @@ public class GribCdmIndex implements IndexReader {
   /////////////////////////////////////////////////////////////////////////////////////////////////
 
   public static File getTopIndexFileFromConfig(FeatureCollectionConfig config) {
-    File indexFile = makeTopIndexFileFromConfig(config);
-    return GribIndexCache.getExistingFileOrCache(indexFile.getPath());
+    final String indexFilePath = makeTopIndexPathFromConfig(config);
+    return GribIndexCache.getExistingFileOrCache(indexFilePath);
   }
 
   /**
    * This is only used for the top level GribCollection.
    *
    * @param config use this FeatureCollectionConfig
-   * @return index File
+   * @return path of index file (could be local, s3, or in the cache)
    */
-  private static File makeTopIndexFileFromConfig(FeatureCollectionConfig config) {
+  private static String makeTopIndexPathFromConfig(FeatureCollectionConfig config) {
     Formatter errlog = new Formatter();
     CollectionSpecParserAbstract specp = config.getCollectionSpecParserAbstract(errlog);
 
-    String name = StringUtil2.replace(config.collectionName, '\\', "/");
-    // String cname = DirectoryCollection.makeCollectionName(name, Paths.get(specp.getRootDir()));
-
-    return makeIndexFile(name, new File(specp.getRootDir()));
+    return specp.getFilePath(config.getStandardizedCollectionName() + NCX_SUFFIX);
   }
 
   static File makeIndexFile(String collectionName, File directory) {
     String nameNoBlanks = StringUtil2.replace(collectionName, ' ', "_");
     return new File(directory, nameNoBlanks + NCX_SUFFIX);
-  }
-
-  private static String makeNameFromIndexFilename(String idxPathname) {
-    idxPathname = StringUtil2.replace(idxPathname, '\\', "/");
-    int pos = idxPathname.lastIndexOf('/');
-    String idxFilename = (pos < 0) ? idxPathname : idxPathname.substring(pos + 1);
-    assert idxFilename.endsWith(NCX_SUFFIX) : idxFilename;
-    return idxFilename.substring(0, idxFilename.length() - NCX_SUFFIX.length());
   }
 
   ///////////////////////////////////////////
@@ -177,14 +167,14 @@ public class GribCdmIndex implements IndexReader {
   @Nullable
   public static GribCollectionImmutable openCdmIndex(String indexFilename, FeatureCollectionConfig config,
       boolean useCache, Logger logger) throws IOException {
-    File indexFileInCache = useCache ? GribIndexCache.getExistingFileOrCache(indexFilename) : new File(indexFilename);
+    MFile indexFileInCache = useCache ? GribIndexCache.getExistingMFileOrCacheFile(indexFilename) : MFiles.create(indexFilename);
     if (indexFileInCache == null)
       return null;
     String indexFilenameInCache = indexFileInCache.getPath();
-    String name = makeNameFromIndexFilename(indexFilename);
+    String name = config.getStandardizedCollectionName();
     GribCollectionImmutable result = null;
 
-    try (RandomAccessFile raf = RandomAccessFile.acquire(indexFilenameInCache)) {
+    try (RandomAccessFile raf = NetcdfFiles.getRaf(indexFilenameInCache, -1)) {
       GribCollectionType type = getType(raf);
 
       switch (type) {
@@ -209,8 +199,8 @@ public class GribCdmIndex implements IndexReader {
     } catch (Throwable t) {
       logger.warn("GribCdmIndex.openCdmIndex failed on " + indexFilenameInCache, t);
       RandomAccessFile.eject(indexFilenameInCache);
-      if (!indexFileInCache.delete())
-        logger.warn("failed to delete {}", indexFileInCache.getPath());
+//      if (!indexFileInCache.delete())
+//        logger.warn("failed to delete {}", indexFileInCache.getPath());
     }
 
     return result;
@@ -226,7 +216,7 @@ public class GribCdmIndex implements IndexReader {
       return null;
     }
     String indexFilenameInCache = indexFileInCache.getPath();
-    String name = makeNameFromIndexFilename(indexFilename);
+    String name = config.getStandardizedCollectionName();
     GribCollectionMutable result = null;
 
     try (RandomAccessFile raf = RandomAccessFile.acquire(indexFilenameInCache)) {
@@ -429,11 +419,11 @@ public class GribCdmIndex implements IndexReader {
       return false;
 
     // see if index already exists
-    File collectionIndexFile = GribIndexCache.getExistingFileOrCache(idxFilenameOrg);
+    MFile collectionIndexFile = GribIndexCache.getExistingMFileOrCacheFile(idxFilenameOrg);
     if (collectionIndexFile != null) { // it exists
 
       boolean bad;
-      try (RandomAccessFile raf = RandomAccessFile.acquire(collectionIndexFile.getPath())) { // read it to verify its
+      try (RandomAccessFile raf = NetcdfFiles.getRaf(collectionIndexFile.getPath(), -1)) { // read it to verify its
                                                                                              // good
         GribCollectionType type = getType(raf);
         bad = (type != wantType);
@@ -444,10 +434,9 @@ public class GribCdmIndex implements IndexReader {
         bad = true;
       }
 
-      if (bad) { // delete the file and remove from cache if its in there
+      if (bad) { // remove from cache if its in there
         RandomAccessFile.eject(collectionIndexFile.getPath());
-        if (!collectionIndexFile.delete())
-          logger.warn("failed to delete {}", collectionIndexFile.getPath());
+        // TODO do we even want to delete here? not necessarily in the cache. could be "bad" because its not the type we wanted or because of IOException
       }
     }
 
@@ -739,7 +728,7 @@ public class GribCdmIndex implements IndexReader {
     // update if needed
     boolean changed = updateGribCollection(config, updateType, logger);
 
-    File idxFile = makeTopIndexFileFromConfig(config);
+    String idxFilePath = makeTopIndexPathFromConfig(config);
 
     // If call to updateGribCollection shows a change happened, then collection changed.
     // If updateType is never (tds is in charge of updating, not TDM or some other external application),
@@ -752,7 +741,7 @@ public class GribCdmIndex implements IndexReader {
       gribCollectionCache.clearCache(true);
     }
 
-    return openCdmIndex(idxFile.getPath(), config, true, logger);
+    return openCdmIndex(idxFilePath, config, true, logger);
   }
 
   ////////////////////////////////////////////////////////////////////////////////////

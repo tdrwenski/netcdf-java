@@ -145,23 +145,6 @@ public class Grib1Index extends GribIndex {
     return true;
   }
 
-  private static String getIndexPath(String filename) {
-    String idxPath = filename;
-    String fragment = "";
-
-    if ((filename.startsWith("cdms3:") || filename.startsWith("s3:")) && filename.contains("#")) { // TODO nicer way using MFile?
-      final int fragmentLocation = filename.indexOf('#');
-      idxPath = filename.substring(0, fragmentLocation);
-      fragment = filename.substring(fragmentLocation);
-    }
-
-    if (!idxPath.endsWith(GBX9_IDX)) {
-      idxPath += GBX9_IDX;
-    }
-
-    return idxPath + fragment;
-  }
-
   // deserialize the Grib1Record object
   private Grib1Record readRecord(Grib1IndexProto.Grib1Record p) {
     Grib1SectionIndicator is = new Grib1SectionIndicator(p.getGribMessageStart(), p.getGribMessageLength());
@@ -183,9 +166,7 @@ public class Grib1Index extends GribIndex {
 
   // LOOK what about extending an index ??
   public boolean makeIndex(String filename, RandomAccessFile dataRaf) throws IOException {
-    String idxPath = filename;
-    if (!idxPath.endsWith(GBX9_IDX))
-      idxPath += GBX9_IDX;
+    String idxPath = getIndexPath(filename);
     File idxFile = GribIndexCache.getFileOrCache(idxPath);
     File idxFileTmp = GribIndexCache.getFileOrCache(idxPath + ".tmp");
 

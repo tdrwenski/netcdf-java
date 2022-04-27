@@ -30,30 +30,26 @@ public abstract class GribIndex {
 
   private static final CollectionManager.ChangeChecker gribCC = new CollectionManager.ChangeChecker() {
     public boolean hasChangedSince(MFile file, long when) {
-      String idxPath = file.getPath();
-      if (!idxPath.endsWith(GBX9_IDX))
-        idxPath += GBX9_IDX;
-      File idxFile = GribIndexCache.getExistingFileOrCache(idxPath);
+      String idxPath = getIndexPath(file.getPath());
+      MFile idxFile = GribIndexCache.getExistingMFileOrCacheFile(idxPath);
       if (idxFile == null)
         return true;
 
-      long idxLastModified = idxFile.lastModified();
+      long idxLastModified = idxFile.getLastModified();
       if (idxLastModified < file.getLastModified())
         return true;
       return 0 < when && when < idxLastModified;
     }
 
     public boolean hasntChangedSince(MFile file, long when) {
-      String idxPath = file.getPath();
-      if (!idxPath.endsWith(GBX9_IDX))
-        idxPath += GBX9_IDX;
-      File idxFile = GribIndexCache.getExistingFileOrCache(idxPath);
+      String idxPath = getIndexPath(file.getPath());
+      MFile idxFile = GribIndexCache.getExistingMFileOrCacheFile(idxPath);
       if (idxFile == null)
         return true;
 
-      if (idxFile.lastModified() < file.getLastModified())
+      if (idxFile.getLastModified() < file.getLastModified())
         return true;
-      return 0 < when && idxFile.lastModified() < when;
+      return 0 < when && idxFile.getLastModified() < when;
     }
   };
   /////////////////////////////////////////////////////////////////////////
@@ -100,6 +96,23 @@ public abstract class GribIndex {
     return index;
   }
 
+  protected static String getIndexPath(String filename) {
+    String idxPath = filename;
+    String fragment = "";
+
+    if ((filename.startsWith("cdms3:") || filename.startsWith("s3:")) && filename.contains("#")) { // TODO nicer way using MFile?
+      final int fragmentLocation = filename.indexOf('#');
+      idxPath = filename.substring(0, fragmentLocation);
+      fragment = filename.substring(fragmentLocation);
+    }
+
+    if (!idxPath.endsWith(GBX9_IDX)) {
+      idxPath += GBX9_IDX;
+    }
+
+    // TODO need to add fragment back in?
+    return idxPath;
+  }
   //////////////////////////////////////////
 
   /**
