@@ -76,6 +76,7 @@ public class MFileCollectionManager extends CollectionManagerAbstract {
   private final List<CollectionConfig> scanList = new ArrayList<>(); // an MCollection is a collection of managed files
   private final long olderThanInMsecs; // LOOK why not use LastModifiedLimit filter ?
   // protected String rootDir;
+  protected String indexFilename;
   protected FeatureCollectionConfig config;
 
   @GuardedBy("this")
@@ -95,6 +96,7 @@ public class MFileCollectionManager extends CollectionManagerAbstract {
     this.recheck = null;
     this.protoChoice = FeatureCollectionConfig.ProtoChoice.Penultimate; // default
     this.root = sp.getRootDir();
+    this.indexFilename = sp.getFilePath(collectionName);
 
     CompositeMFileFilter filters = new CompositeMFileFilter();
     if (null != sp.getFilter())
@@ -113,6 +115,7 @@ public class MFileCollectionManager extends CollectionManagerAbstract {
 
     CollectionSpecParserAbstract sp = config.getCollectionSpecParserAbstract(errlog);
     this.root = sp.getRootDir();
+    this.indexFilename = sp.getFilePath(collectionName);
 
     CompositeMFileFilter filters = new CompositeMFileFilter();
     if (null != sp.getFilter())
@@ -334,6 +337,11 @@ public class MFileCollectionManager extends CollectionManagerAbstract {
     }
 
     return true;
+  }
+
+  @Override
+  public String getIndexFilename(String suffix) {
+    return indexFilename + suffix;
   }
 
   ////////////////////////
