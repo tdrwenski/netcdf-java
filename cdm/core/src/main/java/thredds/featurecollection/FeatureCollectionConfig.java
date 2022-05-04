@@ -162,6 +162,11 @@ public class FeatureCollectionConfig {
     return collectionName;
   }
 
+  public String getStandardizedCollectionName() {
+    final String name = StringUtil2.replace(collectionName, '\\', "/");
+    return StringUtil2.replace(name, ' ', "_");
+  }
+
   public boolean isTrigggerOk() {
     return updateConfig.triggerOk || (tdmConfig != null) && tdmConfig.triggerOk;
   }
