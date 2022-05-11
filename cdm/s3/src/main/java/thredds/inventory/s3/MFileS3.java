@@ -4,9 +4,12 @@
  */
 package thredds.inventory.s3;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Objects;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
@@ -321,6 +324,43 @@ public class MFileS3 implements MFile {
     try (RandomAccessFile randomAccessFile = provider.open(cdmS3Uri.toString())) {
       IO.copyRafB(randomAccessFile, offset, maxBytes, outputStream);
     }
+  }
+
+  @Override
+  public boolean createFrom(Path sourcePath) throws FileNotFoundException {
+    if (!Files.exists(sourcePath)) {
+      throw new FileNotFoundException("File not found: " + sourcePath);
+    }
+
+    final S3Client client = getClient();
+
+    if (client == null) {
+      return false;
+    }
+
+    final PutObjectRequest objectRequest = PutObjectRequest.builder().bucket(cdmS3Uri.getBucket()).key(key).build();
+
+    final PutObjectResponse response = client.putObject(objectRequest, sourcePath);
+    final boolean success = response.sdkHttpResponse().isSuccessful();
+    exists = success;
+    return success;
+  }
+
+  @Override
+  public boolean delete() {
+    final S3Client client = getClient();
+
+    if (client == null) {
+      return false;
+    }
+
+    final DeleteObjectRequest deleteObjectRequest =
+        DeleteObjectRequest.builder().bucket(cdmS3Uri.getBucket()).key(key).build();
+
+    final DeleteObjectResponse response = client.deleteObject(deleteObjectRequest);
+    final boolean deleted = response.sdkHttpResponse().isSuccessful();
+    exists = !deleted;
+    return deleted;
   }
 
   public static class Provider implements MFileProvider {

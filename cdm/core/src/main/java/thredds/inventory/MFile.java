@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
 
 /**
  * An abstraction for java.io.File / java.nio.file.Path
@@ -95,4 +96,20 @@ public interface MFile extends Comparable<MFile> {
    * @param maxBytes the maximum number of bytes to copy
    */
   void writeToStream(OutputStream outputStream, long offset, long maxBytes) throws IOException;
+
+  /**
+   * Create the MFile from the file at the given path
+   *
+   * @param sourcePath the path of the source file to use to create to MFile
+   * @return true if successful, else false
+   * @throws IOException If an I/O error occurred
+   */
+  boolean createFrom(Path sourcePath) throws IOException;
+
+  /**
+   * Delete the MFile
+   *
+   * @return true if successful, else false
+   */
+  boolean delete();
 }

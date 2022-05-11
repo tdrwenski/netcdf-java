@@ -9,6 +9,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import javax.annotation.Nullable;
 import thredds.filesystem.MFileOS;
 import thredds.inventory.MFile;
@@ -135,5 +136,19 @@ public class GcMFile implements thredds.inventory.MFile {
     try (RandomAccessFile randomAccessFile = RandomAccessFile.acquire(getPath())) {
       IO.copyRafB(randomAccessFile, offset, maxBytes, outputStream);
     }
+  }
+
+  @Override
+  public boolean createFrom(Path sourcePath) throws IOException {
+    final File file = new File(directory, name);
+    file.createNewFile();
+    IO.copyFile(sourcePath.toFile(), file);
+    return true;
+  }
+
+  @Override
+  public boolean delete() {
+    final File file = new File(directory, name);
+    return file.delete();
   }
 }

@@ -98,6 +98,18 @@ public class TestMFileOS7 {
         assertThat(inputStream.read()).isNotEqualTo(-1);
       }
     }
+
+    @Test
+    public void shouldCreateAndDeleteFile() throws IOException {
+      final MFileOS7 mFile = new MFileOS7(Paths.get(tempFolder.getRoot() + "/newFile"), null);
+      assertThat(mFile.exists()).isFalse();
+
+      assertThat(mFile.createFrom(createTemporaryFile(10).toPath())).isTrue();
+      assertThat(mFile.exists()).isTrue();
+
+      assertThat(mFile.delete()).isTrue();
+      assertThat(mFile.exists()).isFalse();
+    }
   }
 
   private static File createTemporaryFile(int size) throws IOException {

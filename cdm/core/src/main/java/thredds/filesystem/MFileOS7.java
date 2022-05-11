@@ -141,6 +141,18 @@ public class MFileOS7 implements MFile {
     }
   }
 
+  @Override
+  public boolean createFrom(Path sourcePath) throws IOException {
+    path.toFile().createNewFile();
+    IO.copyFile(sourcePath.toFile(), path.toFile());
+    return true;
+  }
+
+  @Override
+  public boolean delete() {
+    return path.toFile().delete();
+  }
+
   public Path getNioPath() {
     return path;
   }

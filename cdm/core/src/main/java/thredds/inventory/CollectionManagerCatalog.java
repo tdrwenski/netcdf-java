@@ -7,6 +7,7 @@ package thredds.inventory;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import thredds.client.catalog.Access;
 import thredds.client.catalog.Dataset;
 import thredds.client.catalog.tools.CatalogCrawler;
@@ -167,6 +168,16 @@ public class CollectionManagerCatalog extends CollectionManagerAbstract implemen
     @Override
     public void writeToStream(OutputStream outputStream, long offset, long maxBytes) {
       throw new UnsupportedOperationException("Writing MFileRemote not implemented. Filename: " + getName());
+    }
+
+    @Override
+    public boolean createFrom(Path sourcePath) throws IOException {
+      throw new UnsupportedOperationException("CreateFrom MFileRemote not implemented. Filename: " + getName());
+    }
+
+    @Override
+    public boolean delete() {
+      throw new UnsupportedOperationException("Deleting MFileRemote not implemented. Filename: " + getName());
     }
   }
 

@@ -174,6 +174,16 @@ public class MFileZip implements MFile {
         "Writing MFileZip with a byte range to stream not implemented. Filename: " + getName());
   }
 
+  @Override
+  public boolean createFrom(Path sourcePath) {
+    throw new UnsupportedOperationException("CreateFrom MFileZip not implemented. Filename: " + getName());
+  }
+
+  @Override
+  public boolean delete() {
+    throw new UnsupportedOperationException("Deleting MFileZip not implemented. Filename: " + getName());
+  }
+
   public Path getRootPath() {
     return rootPath;
   }

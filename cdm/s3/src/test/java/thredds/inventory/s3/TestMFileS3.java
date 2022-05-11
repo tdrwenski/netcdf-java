@@ -7,16 +7,26 @@ package thredds.inventory.s3;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Random;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import thredds.inventory.MFile;
 import ucar.unidata.io.s3.S3TestsCommon;
@@ -61,6 +71,11 @@ public class TestMFileS3 {
   private static final String OSDC_G16_S3_OBJECT_2 =
       S3TestsCommon.TOP_LEVEL_OSDC_BUCKET + "?" + G16_OBJECT_KEY_2.replaceFirst(G16_DIR, OSDC_G16_DIR);
   private static final String OSDC_G16_S3_URI_DIR = S3TestsCommon.TOP_LEVEL_OSDC_BUCKET + "?" + OSDC_G16_DIR;
+
+  private static final String THREDDS_TEST_BUCKET = "cdms3:thredds-test-data";
+
+  @ClassRule
+  public static final TemporaryFolder tempFolder = new TemporaryFolder();
 
   @BeforeClass
   public static void setup() {
@@ -253,6 +268,65 @@ public class TestMFileS3 {
     try (final InputStream inputStream = mFile.getInputStream()) {
       assertThat(inputStream.read()).isNotEqualTo(-1);
     }
+  }
+
+  @Test
+  public void shouldCreateAndDeleteObject() throws IOException {
+    final MFileS3 mFile = new MFileS3(THREDDS_TEST_BUCKET + "?newTestObject");
+    assertThat(mFile.exists()).isFalse();
+
+    final int length = 10;
+    final boolean created = mFile.createFrom(createTemporaryFile(length));
+    assertThat(created).isTrue();
+    assertThat(mFile.exists()).isTrue();
+    assertThat(mFile.getLength()).isEqualTo(length);
+
+    assertThat(mFile.delete()).isTrue();
+    assertThat(mFile.exists()).isFalse();
+  }
+
+  @Test
+  public void shouldNotCreateObjectInNonExistingBucket() throws IOException {
+    final MFileS3 mFile = new MFileS3("cdms3:notABucket?newTestObject");
+    try {
+      mFile.createFrom(createTemporaryFile(0));
+      fail("Expected exception");
+    } catch (NoSuchBucketException e) {
+      // expected
+    } catch (Exception e) {
+      fail("Unexpected exception: " + e.getMessage());
+    }
+  }
+
+  @Test
+  public void shouldNotCreateObjectFromNonExistingSource() throws IOException {
+    final MFileS3 mFile = new MFileS3(THREDDS_TEST_BUCKET + "?newTestObject");
+    try {
+      mFile.createFrom(Paths.get("notAFile"));
+      fail("Expected exception");
+    } catch (FileNotFoundException e) {
+      // expected
+    } catch (Exception e) {
+      fail("Unexpected exception: " + e.getMessage());
+    }
+  }
+
+  @Test
+  public void shouldDeleteNonExistingObject() throws IOException {
+    final MFileS3 mFile = new MFileS3(THREDDS_TEST_BUCKET + "?notAnObject");
+    assertThat(mFile.exists()).isFalse();
+    assertThat(mFile.delete()).isTrue();
+    assertThat(mFile.exists()).isFalse();
+  }
+
+  private static Path createTemporaryFile(int size) throws IOException {
+    final File tempFile = tempFolder.newFile();
+
+    byte[] bytes = new byte[size];
+    new Random().nextBytes(bytes);
+    Files.write(tempFile.toPath(), bytes);
+
+    return Paths.get(tempFile.getPath());
   }
 
   private void checkWithBucket(String cdmS3Uri) throws IOException {

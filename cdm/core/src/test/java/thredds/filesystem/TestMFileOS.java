@@ -90,6 +90,20 @@ public class TestMFileOS {
         assertThat(inputStream.read()).isNotEqualTo(-1);
       }
     }
+
+    @Test
+    public void shouldCreateAndDeleteFile() throws IOException {
+      final MFileOS mFile = new MFileOS(tempFolder.getRoot() + "/newFile");
+      assertThat(mFile.exists()).isFalse();
+
+      final int length = 10;
+      assertThat(mFile.createFrom(createTemporaryFile(length).toPath())).isTrue();
+      assertThat(mFile.exists()).isTrue();
+      assertThat(mFile.getLength()).isEqualTo(length);
+
+      assertThat(mFile.delete()).isTrue();
+      assertThat(mFile.exists()).isFalse();
+    }
   }
 
   private static File createTemporaryFile(int size) throws IOException {

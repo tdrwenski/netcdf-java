@@ -10,6 +10,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import javax.annotation.Nullable;
 import thredds.inventory.MFile;
 import ucar.nc2.util.IO;
@@ -134,6 +135,18 @@ public class MFileOS implements MFile {
     try (RandomAccessFile randomAccessFile = RandomAccessFile.acquire(file.getPath())) {
       IO.copyRafB(randomAccessFile, offset, maxBytes, outputStream);
     }
+  }
+
+  @Override
+  public boolean createFrom(Path sourcePath) throws IOException {
+    file.createNewFile();
+    IO.copyFile(sourcePath.toFile(), file);
+    return true;
+  }
+
+  @Override
+  public boolean delete() {
+    return file.delete();
   }
 
   public File getFile() {

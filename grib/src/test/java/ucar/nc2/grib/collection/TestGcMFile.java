@@ -98,6 +98,18 @@ public class TestGcMFile {
         assertThat(inputStream.read()).isNotEqualTo(-1);
       }
     }
+
+    @Test
+    public void shouldCreateAndDeleteFile() throws IOException {
+      final GcMFile mFile = new GcMFile(tempFolder.getRoot(), "newFile", 0, 0, 0);
+      assertThat(mFile.exists()).isFalse();
+
+      assertThat(mFile.createFrom(createTemporaryFile(10).toPath())).isTrue();
+      assertThat(mFile.exists()).isTrue();
+
+      assertThat(mFile.delete()).isTrue();
+      assertThat(mFile.exists()).isFalse();
+    }
   }
 
 
