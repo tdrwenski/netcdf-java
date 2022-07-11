@@ -319,6 +319,23 @@ public class TestMFileS3 {
     assertThat(mFile.exists()).isFalse();
   }
 
+  @Test
+  public void shouldResolveNewMFileWithDelimiter() throws IOException {
+    final MFileS3 mFile = new MFileS3(AWS_G16_S3_OBJECT_1 + DELIMITER_FRAGMENT);
+    final MFileS3 newMFile = mFile.resolveNewMFile("newKey");
+    assertThat(newMFile.getName()).isEqualTo("newKey");
+    assertThat(newMFile.getPath()).contains(G16_DIR);
+    assertThat(newMFile.getParent().getPath()).isEqualTo(mFile.getParent().getPath());
+  }
+
+  @Test
+  public void shouldResolveNewMFileWithoutDelimiter() throws IOException {
+    final MFileS3 mFile = new MFileS3(AWS_G16_S3_OBJECT_1);
+    final MFileS3 newMFile = mFile.resolveNewMFile("newKey");
+    assertThat(newMFile.getName()).isEqualTo("newKey");
+    assertThat(newMFile.getPath()).doesNotContain(G16_DIR);
+  }
+
   private static Path createTemporaryFile(int size) throws IOException {
     final File tempFile = tempFolder.newFile();
 

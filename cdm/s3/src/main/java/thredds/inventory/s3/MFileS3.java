@@ -11,6 +11,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -205,16 +206,19 @@ public class MFileS3 implements MFile {
   @Override
   @Nullable
   public MFile getParent() throws IOException {
+    final String frag = cdmS3Uri.getFragment().orElse("");
+    final String parentUri = getParentWithoutFragment();
+    return parentUri != null ? new MFileS3(parentUri + "#" + frag) : null;
+  }
+
+  private String getParentWithoutFragment() {
     // In general, objects to do not have parents. However, if a delimiter is set, we have a pseudo path, and then
     // the object can have a parent.
-    MFile parentMfile = null;
     if (delimiter != null) {
       // get the full path
       String currentUri = getPath();
-      String frag = "";
       int chop = currentUri.lastIndexOf("#");
       if (chop > 0) {
-        frag = currentUri.substring(chop);
         currentUri = currentUri.substring(0, chop);
       }
 
@@ -231,13 +235,12 @@ public class MFileS3 implements MFile {
         if (!currentName.isEmpty()) {
           int childLoc = currentUri.lastIndexOf(currentName);
           if (childLoc > 0) {
-            String parentUri = currentUri.substring(0, childLoc);
-            parentMfile = new MFileS3(parentUri + frag);
+            return currentUri.substring(0, childLoc);
           }
         }
       }
     }
-    return parentMfile;
+    return null;
   }
 
   @Override
@@ -361,6 +364,21 @@ public class MFileS3 implements MFile {
     final boolean deleted = response.sdkHttpResponse().isSuccessful();
     exists = !deleted;
     return deleted;
+  }
+
+  @Override
+  public MFileS3 resolveNewMFile(String newFilename) throws IOException {
+    final Optional<String> fragment = cdmS3Uri.getFragment();
+
+    if (fragment.isPresent()) {
+      return new MFileS3(getParentWithoutFragment() + newFilename + "#" + fragment.get());
+    }
+
+    try {
+      return new MFileS3(cdmS3Uri.resolveNewKey(newFilename));
+    } catch (URISyntaxException e) {
+      throw new IOException("Unable to create a CdmS3Uri from: " + newFilename, e);
+    }
   }
 
   public static class Provider implements MFileProvider {

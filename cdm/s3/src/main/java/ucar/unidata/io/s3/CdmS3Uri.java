@@ -247,6 +247,10 @@ public final class CdmS3Uri {
     return Optional.ofNullable(delimiter);
   }
 
+  public Optional<String> getFragment() {
+    return Optional.ofNullable(fragment);
+  }
+
   @Override
   public String toString() {
     return uriString;

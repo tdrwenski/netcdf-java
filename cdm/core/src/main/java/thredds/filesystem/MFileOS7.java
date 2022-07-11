@@ -153,6 +153,11 @@ public class MFileOS7 implements MFile {
     return path.toFile().delete();
   }
 
+  @Override
+  public MFileOS7 resolveNewMFile(String newFilename) {
+    throw new UnsupportedOperationException("MFileOS7::resolveNewMFile not implemented. Filename: " + getName());
+  }
+
   public Path getNioPath() {
     return path;
   }

@@ -149,6 +149,11 @@ public class MFileOS implements MFile {
     return file.delete();
   }
 
+  @Override
+  public MFileOS resolveNewMFile(String newFilename) {
+    return new MFileOS(new File(getFile().getParentFile(), newFilename));
+  }
+
   public File getFile() {
     return file;
   }

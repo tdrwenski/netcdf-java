@@ -184,6 +184,11 @@ public class MFileZip implements MFile {
     throw new UnsupportedOperationException("Deleting MFileZip not implemented. Filename: " + getName());
   }
 
+  @Override
+  public MFileZip resolveNewMFile(String newFilename) {
+    throw new UnsupportedOperationException("MFileZip::resolveNewMFile not implemented. Filename: " + getName());
+  }
+
   public Path getRootPath() {
     return rootPath;
   }

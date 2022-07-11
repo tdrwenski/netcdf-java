@@ -179,6 +179,11 @@ public class CollectionManagerCatalog extends CollectionManagerAbstract implemen
     public boolean delete() {
       throw new UnsupportedOperationException("Deleting MFileRemote not implemented. Filename: " + getName());
     }
+
+    @Override
+    public MFileRemote resolveNewMFile(String newFilename) {
+      throw new UnsupportedOperationException("MFileRemote::resolveNewMFile not implemented. Filename: " + getName());
+    }
   }
 
   ///////////////////////////////

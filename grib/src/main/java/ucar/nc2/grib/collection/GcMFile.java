@@ -152,4 +152,9 @@ public class GcMFile implements thredds.inventory.MFile {
     final File file = new File(directory, name);
     return file.delete();
   }
+
+  @Override
+  public GcMFile resolveNewMFile(String newFilename) {
+    throw new UnsupportedOperationException("GcMFile::resolveNewMFile not implemented. Filename: " + getName());
+  }
 }

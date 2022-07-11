@@ -112,4 +112,13 @@ public interface MFile extends Comparable<MFile> {
    * @return true if successful, else false
    */
   boolean delete();
+
+  /**
+   * Resolve a new MFile in the same location as this MFile
+   *
+   * @param newFileName the file path of the new MFile
+   * @return the new MFile
+   */
+  MFile resolveNewMFile(String newFileName) throws IOException;
+
 }

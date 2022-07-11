@@ -104,6 +104,14 @@ public class TestMFileOS {
       assertThat(mFile.delete()).isTrue();
       assertThat(mFile.exists()).isFalse();
     }
+
+    @Test
+    public void shouldResolveNewMFile() {
+      final MFileOS mFile = new MFileOS(tempFolder.getRoot() + "/testFile");
+      final MFileOS newMFile = mFile.resolveNewMFile("newFile");
+      assertThat(newMFile.getName()).isEqualTo("newFile");
+      assertThat(newMFile.getParent().getPath()).isEqualTo(mFile.getParent().getPath());
+    }
   }
 
   private static File createTemporaryFile(int size) throws IOException {
