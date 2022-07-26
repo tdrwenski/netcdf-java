@@ -25,6 +25,7 @@ import ucar.nc2.grib.grib1.Grib1RecordScanner;
 import ucar.nc2.grib.grib2.Grib2RecordScanner;
 import ucar.nc2.stream.NcStream;
 import ucar.nc2.util.CancelTask;
+import ucar.nc2.util.CloseableIterator;
 import ucar.nc2.util.cache.FileCacheIF;
 import ucar.nc2.util.cache.FileCacheable;
 import ucar.nc2.util.cache.FileFactory;
@@ -546,13 +547,9 @@ public class GribCdmIndex implements IndexReader {
     Formatter errlog = new Formatter();
     CollectionSpecParserAbstract specp = config.getCollectionSpecParserAbstract(errlog);
 
-    try (FilePartition partition = new FilePartition(config.collectionName, dirPath, isTop, config.olderThan, logger)) {
-      partition.putAuxInfo(FeatureCollectionConfig.AUX_CONFIG, config);
-      if (specp.getFilter() != null)
-        partition.setStreamFilter(new StreamFilter(specp.getFilter(), specp.getFilterOnName()));
-
-      logger.debug("GribCdmIndex.updateFilePartition {} {}", partition.getCollectionName(), updateType);
-      if (!isUpdateNeeded(partition.getIndexFilename(NCX_SUFFIX), updateType,
+    try (final MFileCollectionManager collectionManager = new MFileCollectionManager(config, errlog, logger)) {
+      logger.debug("GribCdmIndex.updateFilePartition {} {}", collectionManager.getCollectionName(), updateType);
+      if (!isUpdateNeeded(collectionManager.getIndexFilename(NCX_SUFFIX), updateType,
           (isGrib1 ? GribCollectionType.Partition1 : GribCollectionType.Partition2), logger))
         return false;
 
@@ -560,25 +557,33 @@ public class GribCdmIndex implements IndexReader {
 
       // redo the children here
       if (updateType != CollectionUpdateType.testIndexOnly) { // skip children on testIndexOnly
-        partition.iterateOverMFileCollection(mfile -> {
-          MCollection part = new CollectionSingleFile(mfile, logger);
-          part.putAuxInfo(FeatureCollectionConfig.AUX_CONFIG, config);
+        try (CloseableIterator<MFile> iterator = collectionManager.getFileIterator()) {
+          while (iterator.hasNext()) {
+            final MFile mFile = iterator.next();
+            if (!mFile.isDirectory()) {
+              MCollection partition = new CollectionSingleFile(mFile, logger);
+              partition.putAuxInfo(FeatureCollectionConfig.AUX_CONFIG, config);
 
-          try {
-            boolean changed = updateGribCollection(isGrib1, part, updateType,
-                FeatureCollectionConfig.PartitionType.file, logger, errlog);
-            if (changed)
-              anyChange.set(true);
+              try {
+                boolean changed = updateGribCollection(isGrib1, partition, updateType,
+                    FeatureCollectionConfig.PartitionType.file, logger, errlog);
+                if (changed) {
+                  anyChange.set(true);
+                }
+              } catch (IllegalStateException t) {
+              logger.warn("Error making partition {} '{}'", partition.getRoot(), t.getMessage());
+                partition.removePartition(partition); // keep on truckin; can happen if directory is empty
 
-          } catch (IllegalStateException t) {
-            logger.warn("Error making partition {} '{}'", part.getRoot(), t.getMessage());
-            partition.removePartition(part); // keep on truckin; can happen if directory is empty
-
-          } catch (Throwable t) {
-            logger.error("Error making partition " + part.getRoot(), t);
-            partition.removePartition(part);
+            } catch (Throwable t) {
+              logger.error("Error making partition " + partition.getRoot(), t);
+              partition.removePartition(partition);
+            }
+            }
           }
-        });
+
+        } catch (IOException e) {
+          logger.error("Error making partition ", e);
+        }
       }
 
       // LOOK what if theres only one file?

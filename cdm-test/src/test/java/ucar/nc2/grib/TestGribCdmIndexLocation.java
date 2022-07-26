@@ -44,9 +44,9 @@ public class TestGribCdmIndexLocation {
   private static final String S3_DIR_WITHOUT_INDEX = BUCKET + "?" + "test-grib-without-index";
 
   private static final String[] FILENAMES = {"radar_national.grib1", "cosmo-eu.grib2"};
-  private static final String[] PARTITION_TYPES = {"none", "all"}; // TODO time?
+  private static final String[] PARTITION_TYPES = {"file"}; // TODO time?
   // private static final String[] PARTITION_TYPES = {"none", "directory", "file", "all"}; // TODO time?
-
+  // TODO file and directory with wantSubDirs is another case!
 
   @Parameterized.Parameters(name = "{0}, {1}")
   public static List<Object[]> getTestParameters() {

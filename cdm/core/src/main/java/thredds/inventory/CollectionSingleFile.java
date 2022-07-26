@@ -5,8 +5,7 @@
 
 package thredds.inventory;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.IOException;
 
 /**
  * A CollectionManager consisting of a single file
@@ -19,11 +18,13 @@ public class CollectionSingleFile extends CollectionList {
   public CollectionSingleFile(MFile file, org.slf4j.Logger logger) {
     super(file.getName(), logger);
     mfiles.add(file);
-    Path p = Paths.get(file.getPath());
-    if (p.getParent() != null)
-      this.root = p.getParent().toString();
-    else
+
+    try {
+      final MFile parent = file.getParent();
+      this.root = parent != null ? parent.getPath() : System.getProperty("user.dir");
+    } catch (IOException e) {
       this.root = System.getProperty("user.dir");
+    }
 
     this.lastModified = file.getLastModified();
   }
