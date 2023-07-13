@@ -27,6 +27,7 @@ public class TestGribIndexLocationS3 {
   private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private static final String BUCKET = "cdms3:thredds-test-data";
+  private static final String S3_DIR_WITH_INDEX = BUCKET + "?" + "test-grib-index/";
   private static final String S3_DIR_WITHOUT_INDEX = BUCKET + "?" + "test-grib-without-index/";
   private static final String FRAGMENT = "#delimiter=/";
 
@@ -69,6 +70,22 @@ public class TestGribIndexLocationS3 {
   @After
   public void unsetCacheLocation() {
     System.clearProperty("nj22.cache");
+  }
+
+  @Test
+  public void shouldUseIndexInS3() throws IOException {
+    useCache(false);
+
+    // Check that index file exists
+    final MFile s3FileIndex = new MFileS3(S3_DIR_WITH_INDEX + indexFilename);
+    assertThat(s3FileIndex.exists()).isTrue();
+
+    final MFile s3File = new MFileS3(S3_DIR_WITH_INDEX + filename);
+
+    final GribIndex index =
+        GribIndex.readOrCreateIndexFromSingleFile(isGrib1, s3File, CollectionUpdateType.nocheck, logger);
+    assertThat(index).isNotNull();
+    assertThat(index.getNRecords()).isNotEqualTo(0);
   }
 
   @Test
