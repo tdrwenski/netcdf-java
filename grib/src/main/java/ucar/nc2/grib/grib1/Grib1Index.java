@@ -6,15 +6,16 @@
 package ucar.nc2.grib.grib1;
 
 import com.google.protobuf.ByteString;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import thredds.inventory.CollectionUpdateType;
+import thredds.inventory.MFile;
 import ucar.nc2.NetcdfFiles;
 import ucar.nc2.grib.GribIndex;
 import ucar.nc2.grib.GribIndexCache;
 import ucar.nc2.stream.NcStream;
 import ucar.unidata.io.RandomAccessFile;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
@@ -85,18 +86,15 @@ public class Grib1Index extends GribIndex {
   }
 
   public boolean readIndex(String filename, long gribLastModified, CollectionUpdateType force) {
-    String idxPath = filename;
-    if (!idxPath.endsWith(GBX9_IDX))
-      idxPath += GBX9_IDX;
-    File idxFile = GribIndexCache.getExistingFileOrCache(idxPath);
+    final MFile idxFile = getExistingIndexFile(filename);
     if (idxFile == null)
       return false;
 
-    long idxModified = idxFile.lastModified();
+    final long idxModified = idxFile.getLastModified();
     if ((force != CollectionUpdateType.nocheck) && (idxModified < gribLastModified))
       return false; // force new index if file was updated
 
-    try (FileInputStream fin = new FileInputStream(idxFile)) {
+    try (InputStream fin = idxFile.getInputStream()) {
       //// check header is ok
       if (!NcStream.readAndTest(fin, MAGIC_START.getBytes(StandardCharsets.UTF_8))) {
         logger.info("Bad magic number of grib index, on file = {}", idxFile);

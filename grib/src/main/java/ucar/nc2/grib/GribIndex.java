@@ -5,14 +5,16 @@
 
 package ucar.nc2.grib;
 
+import java.io.File;
 import javax.annotation.Nullable;
+import thredds.filesystem.MFileOS;
 import thredds.inventory.CollectionManager;
 import thredds.inventory.CollectionUpdateType;
 import thredds.inventory.MFile;
+import thredds.inventory.MFiles;
 import ucar.nc2.grib.grib1.Grib1Index;
 import ucar.nc2.grib.grib2.Grib2Index;
 import ucar.unidata.io.RandomAccessFile;
-import java.io.File;
 import java.io.IOException;
 
 /**
@@ -30,30 +32,24 @@ public abstract class GribIndex {
 
   private static final CollectionManager.ChangeChecker gribCC = new CollectionManager.ChangeChecker() {
     public boolean hasChangedSince(MFile file, long when) {
-      String idxPath = file.getPath();
-      if (!idxPath.endsWith(GBX9_IDX))
-        idxPath += GBX9_IDX;
-      File idxFile = GribIndexCache.getExistingFileOrCache(idxPath);
+      final MFile idxFile = getExistingIndexFile(file.getPath());
       if (idxFile == null)
         return true;
 
-      long idxLastModified = idxFile.lastModified();
+      final long idxLastModified = idxFile.getLastModified();
       if (idxLastModified < file.getLastModified())
         return true;
       return 0 < when && when < idxLastModified;
     }
 
     public boolean hasntChangedSince(MFile file, long when) {
-      String idxPath = file.getPath();
-      if (!idxPath.endsWith(GBX9_IDX))
-        idxPath += GBX9_IDX;
-      File idxFile = GribIndexCache.getExistingFileOrCache(idxPath);
+      final MFile idxFile = getExistingIndexFile(file.getPath());
       if (idxFile == null)
         return true;
 
-      if (idxFile.lastModified() < file.getLastModified())
+      if (idxFile.getLastModified() < file.getLastModified())
         return true;
-      return 0 < when && idxFile.lastModified() < when;
+      return 0 < when && idxFile.getLastModified() < when;
     }
   };
   /////////////////////////////////////////////////////////////////////////
@@ -98,6 +94,30 @@ public abstract class GribIndex {
     }
 
     return index;
+  }
+
+  /**
+   * Look for an index MFile in the location of the grib data file and in the cache
+   *
+   * @param gribFilePath full path of the grib data file
+   * @return an index MFile or null if it does not exist
+   */
+  @Nullable
+  protected static MFile getExistingIndexFile(String gribFilePath) {
+    final MFile indexMFile = createIndexFile(gribFilePath);
+
+    if (indexMFile.exists()) {
+      return indexMFile;
+    }
+
+    final File cacheFile = GribIndexCache.getExistingFileOrCache(indexMFile.getPath());
+    return cacheFile == null ? null : new MFileOS(cacheFile);
+  }
+
+  private static MFile createIndexFile(String gribFilePath) {
+    final MFile gribFile = MFiles.create(gribFilePath);
+    return gribFile.getName().endsWith(GBX9_IDX) ? gribFile
+        : MFiles.create(gribFile.getPath().replace(gribFile.getName(), gribFile.getName() + GBX9_IDX));
   }
 
   //////////////////////////////////////////
