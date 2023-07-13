@@ -5,6 +5,8 @@
 
 package ucar.nc2.grib;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import ucar.nc2.grib.collection.Grib;
 import ucar.nc2.util.DiskCache2;
 import java.io.File;
@@ -35,6 +37,7 @@ public class GribIndexCache {
    * @param fileLocation full path of original index filename
    * @return File, possibly in cache, may or may not exist
    */
+  @Nonnull
   public static File getFileOrCache(String fileLocation) {
     File result = getExistingFileOrCache(fileLocation);
     if (result != null)
@@ -48,6 +51,7 @@ public class GribIndexCache {
    * @param fileLocation full path of original index filename
    * @return existing file if you can find it, else null
    */
+  @Nullable
   public static File getExistingFileOrCache(String fileLocation) {
     File result = getDiskCache2().getExistingFileOrCache(fileLocation);
     if (result == null && Grib.debugGbxIndexOnly && fileLocation.endsWith(".gbx9.ncx4")) { // might create only from

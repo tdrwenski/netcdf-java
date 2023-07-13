@@ -4,6 +4,7 @@
  */
 package ucar.nc2.util;
 
+import javax.annotation.Nullable;
 import ucar.nc2.time.CalendarDate;
 import ucar.unidata.util.StringUtil2;
 import java.io.*;
@@ -281,6 +282,7 @@ public class DiskCache2 {
    * @param fileLocation the original name
    * @return existing file if you can find it
    */
+  @Nullable
   public File getExistingFileOrCache(String fileLocation) {
     File f = new File(fileLocation);
     if (f.exists())

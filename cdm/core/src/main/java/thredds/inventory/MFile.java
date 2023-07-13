@@ -58,6 +58,7 @@ public interface MFile extends Comparable<MFile> {
    * 
    * @return the parent or null
    */
+  @Nullable
   MFile getParent() throws IOException;
 
   int compareTo(MFile o);
