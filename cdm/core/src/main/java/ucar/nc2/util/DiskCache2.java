@@ -35,6 +35,7 @@ public class DiskCache2 {
   private static final org.slf4j.Logger cacheLog = org.slf4j.LoggerFactory.getLogger("cacheLogger");
   private static final String lockExtension = ".reserve";
   private static Timer timer;
+  private static final String S3_FRAGMENT = "#delimiter=/";
 
   /** Be sure to call this when your application exits, otherwise your process may not exit without being killed. */
   public static void exit() {
@@ -401,9 +402,12 @@ public class DiskCache2 {
    * @return cache filename
    */
   private String makeCachePath(String fileLocation) {
+    String cachePath = fileLocation;
+
+    // remove s3 delimiter fragment
+    cachePath = cachePath.replace(S3_FRAGMENT, "");
 
     // remove ':', '?', '=', replace '\' with '/', leading or trailing '/'
-    String cachePath = fileLocation;
     cachePath = StringUtil2.remove(cachePath, '?');
     cachePath = StringUtil2.remove(cachePath, '=');
     cachePath = StringUtil2.replace(cachePath, '\\', "/");
