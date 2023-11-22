@@ -19,7 +19,6 @@ jobs:
           build-tool: 'gradlew'
           test-command: '--info --stacktrace testAll'
       - uses: actions/upload-artifact@v2
-        if: failure()
         with:
           name: netCDF-Java_JUnit_Results_${{ github.sha }}_${{ matrix.java-vendor }}-${{ matrix.java-version }}
           path: build/reports/allTests
