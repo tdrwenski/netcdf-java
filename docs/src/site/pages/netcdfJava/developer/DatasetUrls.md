@@ -140,15 +140,24 @@ The following examples show how one could access the same GOES 16 data file acro
 
 [AWS S3 bucket](https://registry.opendata.aws/noaa-goes/){:target="_blank"} in the US East 1 region (open access):
 
-
+{% capture rmd %}
+{% includecodeblock netcdf-java&docs/src/test/java/examples/DatasetUrlExamples.java&awsGoes16Example %}
+{% endcapture %}
+{{ rmd | markdownify }}
 
 [Google Cloud Storage](https://console.cloud.google.com/storage/browser/gcp-public-data-goes-16){:target="_blank"} (open access):
 
-
+{% capture rmd %}
+{% includecodeblock netcdf-java&docs/src/test/java/examples/DatasetUrlExamples.java&gcsGoes16Example %}
+{% endcapture %}
+{{ rmd | markdownify }}
 
 [Open Science Data Cloud](https://www.opensciencedatacloud.org/){:target="_blank"} (Ceph) (open access):
 
-
+{% capture rmd %}
+{% includecodeblock netcdf-java&docs/src/test/java/examples/DatasetUrlExamples.java&osdcGoes16Example %}
+{% endcapture %}
+{{ rmd | markdownify }}
 
 ### File Types
 
@@ -188,7 +197,6 @@ At a minimum, you will need to have saved the binary response (`.dods`).
 It is _strongly recommended_ that you also save the Data Attribute Structure (`.das`) as well, as this contains metadata for the dataset.
 The two files must be located in the same directory and should only differ by file extension.
 Once the files are in place, you may open the saved response by appending the `file:` protocol to the path to the `.dods` file:
-
 
 In the example above, `pathToDodsFile` should look like `C:/Users/me/Downloads/cool-dataset.nc.dods` or `/home/me/data/cool-dataset.nc.dods`.
 Again, is it _strongly recommended_ that `cool-dataset.nc.das` exist, but its existence is technically optional (but you will **not** have metadata without it).
