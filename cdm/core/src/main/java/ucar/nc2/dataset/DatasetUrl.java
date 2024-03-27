@@ -111,6 +111,7 @@ public class DatasetUrl {
     String leadProtocol;
     if (allProtocols.isEmpty()) {
       leadProtocol = "file"; // The location has no leading protocols, assume file:
+      trueUrl = "file:" + trueUrl;
     } else {
       leadProtocol = allProtocols.get(0);
     }
