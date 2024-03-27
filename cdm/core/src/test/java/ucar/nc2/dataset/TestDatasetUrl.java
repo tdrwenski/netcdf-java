@@ -129,4 +129,18 @@ public class TestDatasetUrl {
   public void shouldReturnNullForDirectory() throws IOException {
     testFind(System.getProperty("user.dir"), null);
   }
+
+  @Test
+  public void shouldPrependFileProtocol() throws IOException {
+    final String path = "/path/file.dods";
+    final String pathWithProtocol = "file:" + path;
+
+    DatasetUrl urlForPath = DatasetUrl.findDatasetUrl(path);
+    assertThat(urlForPath.getServiceType()).isEqualTo(ServiceType.OPENDAP);
+    assertThat(urlForPath.getTrueurl()).isEqualTo(pathWithProtocol);
+
+    DatasetUrl urlForPathWithProtocol = DatasetUrl.findDatasetUrl(pathWithProtocol);
+    assertThat(urlForPathWithProtocol.getServiceType()).isEqualTo(ServiceType.OPENDAP);
+    assertThat(urlForPathWithProtocol.getTrueurl()).isEqualTo(pathWithProtocol);
+  }
 }
