@@ -63,6 +63,13 @@ public class TestMFileZip {
       final MFileZip mFile = new MFileZip(zipFile.getName());
       assertThat(mFile.exists()).isEqualTo(true);
     }
+
+    @Test
+    public void shouldReturnTrueForExistingFileWithProtocol() throws IOException {
+      final ZipFile zipFile = createTemporaryZipFile(2, 2);
+      final MFileZip mFile = new MFileZip("file:" + zipFile.getName());
+      assertThat(mFile.exists()).isEqualTo(true);
+    }
   }
 
   private static ZipFile createTemporaryZipFile(int size, int numberOfFiles) throws IOException {

@@ -79,6 +79,12 @@ public class TestMFileOS {
     }
 
     @Test
+    public void shouldReturnTrueForExistingFileWithProtocol() throws IOException {
+      final MFileOS mFile = new MFileOS("file:" + createTemporaryFile(0));
+      assertThat(mFile.exists()).isEqualTo(true);
+    }
+
+    @Test
     public void shouldReturnFalseForNonExistingFile() {
       final MFileOS mFile = new MFileOS("NotARealFile");
       assertThat(mFile.exists()).isEqualTo(false);
