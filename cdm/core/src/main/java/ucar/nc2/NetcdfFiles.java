@@ -439,11 +439,7 @@ public class NetcdfFiles {
       // ok, treat as a local file
       // get rid of crappy microsnot \ replace with happy /
       uriString = StringUtil2.replace(uriString, '\\', "/");
-
-      if (uriString.startsWith("file:")) {
-        // uriString = uriString.substring(5);
-        uriString = StringUtil2.unescape(uriString.substring(5)); // 11/10/2010 from erussell@ngs.org
-      }
+      uriString = uriString.replaceFirst("^file:", "");
 
       String uncompressedFileName = null;
       if (looksCompressed(uriString)) {
