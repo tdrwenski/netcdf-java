@@ -49,6 +49,8 @@ public class MFileZip implements MFile {
   }
 
   public MFileZip(String filename) throws IOException {
+    filename = filename.replaceFirst("^file:", "");
+
     // Split filename into zipfile path and internal path
     int split = filename.indexOf(Provider.ext);
     if (split < 0) {
