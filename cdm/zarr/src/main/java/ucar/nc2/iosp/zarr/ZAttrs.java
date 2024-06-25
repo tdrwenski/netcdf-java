@@ -53,50 +53,68 @@ public class ZAttrs {
           .forEach(key -> attrs.add(createAttribute(key, attrMap.get(key), types)));
 
       List<String> arrayDims = new ArrayList<>();
-      attrMap.keySet().stream().filter(key -> key.equals(NcZarrKeys.ARRAY_DIMENSIONS))
-          .forEach(key -> {
-            Object val = attrMap.get(key);
-            if (val instanceof Collection<?>) {
-              arrayDims.addAll((Collection<String>) val);
-            }
-          });
+      attrMap.keySet().stream().filter(key -> key.equals(NcZarrKeys.ARRAY_DIMENSIONS)).forEach(key -> {
+        Object val = attrMap.get(key);
+        if (val instanceof Collection<?>) {
+          arrayDims.addAll((Collection<String>) val);
+        }
+      });
 
       return new ZAttrs(attrs, arrayDims);
     }
 
     private static Attribute createAttribute(String key, Object val, Map<String, Object> types) {
-      Attribute.Builder attr = Attribute.builder(key);
+      if (types.get(key) == null) {
+        return buildWithJsonType(key, val);
+      }
 
-      // Use ncZarr type attributes
-      Object type = types.get(key);
-      if (type != null) {
-        try {
-          DataType dataType = ZarrTypes.parseDataType((String) type);
-          attr.setDataType(dataType);
-          int size = val instanceof Collection<?> ? ((Collection<?>) val).size() : 1;
-          Array array = Array.factory(dataType, new int[]{size});
-          attr.setValues(array);
-        } catch (ZarrFormatException e) {
-          // try to use json types instead of explicit type
+      try {
+        DataType dataType = ZarrTypes.parseDataType((String) types.get(key));
+        return buildWithType(key, val, dataType);
+      } catch (ZarrFormatException e) {
+        return buildWithJsonType(key, val);
+      }
+    }
+
+    private static Attribute buildWithType(String key, Object value, DataType dataType) {
+      Attribute.Builder attribute = Attribute.builder(key);
+      attribute.setDataType(dataType);
+
+      if (value instanceof Collection<?>) {
+        Object[] values = ((Collection<?>) value).toArray();
+        Array array = Array.factory(dataType, new int[] {values.length});
+
+        for (int i = 0; i < values.length; i++) {
+          array.setObject(i, values[i]);
         }
+        attribute.setValues(array);
+      } else {
+        Array array = Array.factory(dataType, new int[] {1});
+        array.setObject(0, value);
+        attribute.setValues(array);
       }
 
-      // use json types
-      if (val instanceof Collection<?>) {
-        attr.setValues(Arrays.asList(((Collection) val).toArray()), false);
-      } else if (val instanceof Number) {
-        attr.setNumericValue((Number) val, false);
-      } else if (val instanceof String ){
-        attr.setStringValue((String) val);
+      return attribute.build();
+    }
+
+    private static Attribute buildWithJsonType(String key, Object value) {
+      Attribute.Builder attribute = Attribute.builder(key);
+
+      if (value instanceof Collection<?>) {
+        attribute.setValues(Arrays.asList(((Collection) value).toArray()), false);
+      } else if (value instanceof Number) {
+        attribute.setNumericValue((Number) value, false);
+      } else if (value instanceof String) {
+        attribute.setStringValue((String) value);
       }
 
-      return attr.build();
+      return attribute.build();
     }
 
     private static Map<String, Object> getTypes(Map<String, Object> attrMap) {
       Object ncZarrAttr = attrMap.get(NcZarrKeys.NC_ZARR_ATTR);
       Object types = ncZarrAttr instanceof Map<?, ?> ? ((Map<?, ?>) ncZarrAttr).get(NcZarrKeys.TYPES) : null;
-      return types instanceof Map<?,?> ? (Map<String, Object>) types : new HashMap<>();
+      return types instanceof Map<?, ?> ? (Map<String, Object>) types : new HashMap<>();
     }
 
     private static boolean includeAttributes(String key) {
