@@ -7,7 +7,6 @@ package ucar.nc2.iosp.zarr;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import ucar.ma2.ArrayObject;
 import ucar.nc2.Attribute;
 import ucar.nc2.Dimension;
 import ucar.nc2.Group;
@@ -51,16 +50,16 @@ public class ZarrHeader {
     private RandomAccessDirectoryItem var;
     private ZArray zarray;
     private Map<Integer, Long> initializedChunks; // track any uninitialized chunks for var
-    private List<Attribute> attrs; // list of variable attributes
+    private ZAttrs zAttrs;
     private long dataOffset; // byte position where data starts
 
-    void setAttrs(List<Attribute> attrs) {
-      this.attrs = attrs;
+    void setZAttrs(ZAttrs zAttrs) {
+      this.zAttrs = zAttrs;
     }
 
     void setVar(RandomAccessDirectoryItem var) {
       this.var = var;
-      this.attrs = null;
+      this.zAttrs = null;
       this.initializedChunks = new HashMap<>();
       this.dataOffset = -1;
       if (var != null) {
@@ -112,7 +111,7 @@ public class ZarrHeader {
         return; // do nothing if no variable is in progress
       }
       try {
-        makeVariable(var, dataOffset, zarray, initializedChunks, attrs);
+        makeVariable(var, dataOffset, zarray, initializedChunks, zAttrs);
       } catch (ZarrFormatException ex) {
         logger.error(ex.getMessage());
       }
@@ -135,15 +134,15 @@ public class ZarrHeader {
       String filepath = ZarrUtils.trimLocation(item.getLocation());
 
       if (filepath.endsWith(ZarrKeys.ZATTRS)) { // attributes
-        List<Attribute> attrs = makeAttributes(item);
+        ZAttrs zAttrs = makeAttributes(item);
 
         // assign attrs to either variable or group
         if (delayedVarMaker.myAttrs(item)) {
-          delayedVarMaker.setAttrs(attrs);
+          delayedVarMaker.setZAttrs(zAttrs);
         } else {
           // if .zattrs file does not belong to current var, we are in a new object and need to finish variable build
           delayedVarMaker.makeVar();
-          grp_attrs = attrs;
+          grp_attrs = zAttrs.getAttributes();
         }
 
       } else if (filepath.endsWith(ZarrKeys.ZMETADATA)) { // possible consolidated metadata in root group
@@ -197,7 +196,7 @@ public class ZarrHeader {
   }
 
   private void makeVariable(RandomAccessDirectoryItem item, long dataOffset, ZArray zarray,
-      Map<Integer, Long> initializedChunks, List<Attribute> attrs) throws ZarrFormatException {
+      Map<Integer, Long> initializedChunks, ZAttrs zAttrs) throws ZarrFormatException {
     // make new Variable
     Variable.Builder<?> var = Variable.builder();
     String location = ZarrUtils.trimLocation(item.getLocation());
@@ -212,31 +211,8 @@ public class ZarrHeader {
     // NOTE: The Nczarr spec allows for honoring or ignoring this attribute by specifying a mode.
     // See under "Client Parameters" on https://docs.unidata.ucar.edu/nug/current/nczarr_head.html
     // We do nothing to check how that's set.
-    String[] dimNames = null;
-    boolean hasNamedDimensions = false;
-
-    if (attrs != null) {
-
-      for (Attribute attr : attrs) {
-        final String attrName = attr.getName();
-        if ("_ARRAY_DIMENSIONS".equals(attrName)) {
-          try {
-            final ArrayObject.D1 aod1 = (ArrayObject.D1) attr.getValues();
-
-            // getSize returns a long
-            final int aodSize = (int) aod1.getSize();
-            dimNames = new String[aodSize];
-
-            for (int i = 0; i < aodSize; ++i) {
-              dimNames[i] = (String) aod1.get(i);
-            }
-            hasNamedDimensions = true;
-          } catch (final Exception exc) {
-            logger.debug("  Could not extract _ARRAY_DIMENSIONS for {}, {}", vname, exc.getMessage());
-          }
-        }
-      }
-    }
+    List<String> dimNames = zAttrs.getArrayDimensions();
+    boolean hasNamedDimensions = !dimNames.isEmpty();
 
     // set variable datatype
     var.setDataType(zarray.getDataType());
@@ -248,14 +224,14 @@ public class ZarrHeader {
     // If hasNamedDimensions set above, we will want to share var's dimensions with the group.
     int[] shape = zarray.getShape();
 
-    if (hasNamedDimensions && shape.length != dimNames.length) {
+    if (hasNamedDimensions && shape.length != dimNames.size()) {
       throw new ZarrFormatException("Array " + vname + " has dimensions attribute count that does not match its rank.");
     }
 
     final List<Dimension> dims = new ArrayList<>();
     for (int i = 0; i < shape.length; i++) {
 
-      final String dname = (hasNamedDimensions) ? dimNames[i] : String.format("dim%d", i);
+      final String dname = (hasNamedDimensions) ? dimNames.get(i) : String.format("dim%d", i);
 
       final Dimension.Builder dim = Dimension.builder(dname, shape[i]);
       dim.setIsVariableLength(false);
@@ -296,9 +272,7 @@ public class ZarrHeader {
 
     // Include some info from .zarray file in attributes for display when showing variable detail.
     // Possibly add to this fill_value if in .zarray but not .zattrs?
-    if (attrs == null) {
-      attrs = new ArrayList<>();
-    }
+    List<Attribute> attrs = zAttrs.getAttributes();
     final Filter compressor = zarray.getCompressor();
     if (compressor == null) {
       attrs.add(new Attribute("_Compressor", "none"));
@@ -313,33 +287,19 @@ public class ZarrHeader {
     parentGroup.addVariable(var);
   }
 
-  private List<Attribute> makeAttributes(RandomAccessDirectoryItem item) {
+  private ZAttrs makeAttributes(RandomAccessDirectoryItem item) {
     // get RandomAccessFile for JSON parsing
     try {
       RandomAccessFile raf = item.getOrOpenRaf();
       // read attributes from file
       raf.seek(0);
-      Map<String, Object> attrMap = objectMapper.readValue(raf, HashMap.class);
+      ZAttrs zAttrs = objectMapper.readValue(raf, ZAttrs.class);
 
-      // create Attribute objects
-      List<Attribute> attrs = new ArrayList<>();
-      attrMap.keySet().forEach(key -> {
-        Attribute.Builder attr = Attribute.builder(key);
-        Object val = attrMap.get(key);
-        if (val instanceof Collection<?>) {
-          attr.setValues(Arrays.asList(((Collection) val).toArray()), false);
-        } else if (val instanceof Number) {
-          attr.setNumericValue((Number) val, false);
-        } else {
-          attr.setStringValue((String) val);
-        }
-        attrs.add(attr.build());
-      });
-      return attrs;
+      return zAttrs;
     } catch (IOException ioe) {
       ZarrIosp.logger.error(new ZarrFormatException().getMessage());
     }
-    return null;
+    return new ZAttrs();
   }
 
   /**

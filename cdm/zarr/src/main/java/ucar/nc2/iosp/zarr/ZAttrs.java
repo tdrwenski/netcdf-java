@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,11 @@ import ucar.nc2.Attribute;
 public class ZAttrs {
   private final List<Attribute> attributes;
   private final List<String> arrayDimensions;
+
+  public ZAttrs() {
+    this.attributes = Collections.emptyList();
+    this.arrayDimensions = Collections.emptyList();
+  }
 
   public ZAttrs(List<Attribute> attributes, List<String> arrayDimensions) {
     this.attributes = attributes;
