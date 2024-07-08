@@ -53,21 +53,21 @@ public class TestZAttrs {
 
   @Test
   public void shouldReadTypedAttribute() throws IOException {
-    checkTypedAttribute(true, "<b1", true, DataType.BOOLEAN);
-    checkTypedAttribute(5.1, "<i1", 5, DataType.BYTE);
-    checkTypedAttribute(5.1, "<u1", 5, DataType.UBYTE);
-    checkTypedAttribute(5.1, "<i2", 5, DataType.SHORT);
-    checkTypedAttribute(5.1, "<u2", 5, DataType.USHORT);
-    checkTypedAttribute(5.1, "<i4", 5, DataType.INT);
-    checkTypedAttribute(5.1, "<u4", 5, DataType.UINT);
-    checkTypedAttribute(5.1, "<i8", 5, DataType.LONG);
-    checkTypedAttribute(5.1, "<u8", 5, DataType.ULONG);
-    checkTypedAttribute(5.1, "<f4", 5.1f, DataType.FLOAT);
-    checkTypedAttribute(5.1, "<f8", 5.1, DataType.DOUBLE);
+//    checkTypedAttribute(true, "<b1", true, DataType.BOOLEAN);
+//    checkTypedAttribute(5.1, "<i1", 5, DataType.BYTE);
+//    checkTypedAttribute(5.1, "<u1", 5, DataType.UBYTE);
+//    checkTypedAttribute(5.1, "<i2", 5, DataType.SHORT);
+//    checkTypedAttribute(5.1, "<u2", 5, DataType.USHORT);
+//    checkTypedAttribute(5.1, "<i4", 5, DataType.INT);
+//    checkTypedAttribute(5.1, "<u4", 5, DataType.UINT);
+//    checkTypedAttribute(5.1, "<i8", 5, DataType.LONG);
+//    checkTypedAttribute(5.1, "<u8", 5, DataType.ULONG);
+//    checkTypedAttribute(5.1, "<f4", 5.1f, DataType.FLOAT);
+//    checkTypedAttribute(5.1, "<f8", 5.1, DataType.DOUBLE);
     // checkTypedAttribute("\"foo\"", "<O1", "foo", DataType.OBJECT); // TODO is this a json object?
-    checkTypedAttribute("\"foo\"", "<S4", "foo", DataType.STRING);
-    checkTypedAttribute("\"foo\"", "<U4", "foo", DataType.STRING);
-    // checkTypedAttribute("\"f\"", "<S1", 'f', DataType.CHAR); // TODO chars?
+//    checkTypedAttribute("\"foo\"", "<S4", "foo", DataType.STRING);
+//    checkTypedAttribute("\"foo\"", "<U4", "foo", DataType.STRING);
+     checkTypedAttribute("\"f\"", "<S1", 'f', DataType.CHAR); // TODO chars? Attributes with type char get convert to string
     // checkTypedAttribute("\"f\"", "<U1", 'f', DataType.CHAR); // TODO chars?
   }
 

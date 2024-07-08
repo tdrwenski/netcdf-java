@@ -530,7 +530,11 @@ public class ArrayChar extends Array implements Iterable<String> {
 
   @Override
   public void setObject(int index, Object value) {
-    storage[index] = (Character) value;
+    if (value instanceof String) {
+      setString((String) value);
+    } else {
+      storage[index] = (Character) value;
+    }
   }
 
   /**
